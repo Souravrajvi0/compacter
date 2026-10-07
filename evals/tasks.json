@@ -1,0 +1,18 @@
+{
+  "tasks": [
+    {
+      "name": "compress tool-heavy session, keep constraints and goals",
+      "task": "Preserve the original goal and the no-secrets constraint; compress the tool-heavy middle of the session.",
+      "session": "session-a.jsonl",
+      "keep_recent": 4,
+      "expected": "PASS — goal + constraint survive as pinned, verbatim messages; huge logs are dropped, the secret is excluded."
+    },
+    {
+      "name": "drop experimental branches, preserve decisions and file paths",
+      "task": "Drop the experimental SQLite branch; preserve the final decision, file paths, and the under-5-subcommands goal.",
+      "session": "session-b.jsonl",
+      "keep_recent": 3,
+      "expected": "PASS — decision/path/goal messages are keep_verbatim; drop_ok branch text is discarded."
+    }
+  ]
+}

@@ -1,0 +1,195 @@
+{
+  "fixtures": [
+    {
+      "fixture": "session-a.jsonl",
+      "keep_recent": 4,
+      "tokens_before": 778,
+      "naive": {
+        "tokens_after": 796,
+        "pins_preserved": false,
+        "secret_leaked": true,
+        "pair_splits": 0,
+        "metrics": {
+          "goals_retained": 1,
+          "constraints_retained": 1,
+          "decisions_retained": 1,
+          "errors_kept_verbatim": [
+            0,
+            0
+          ],
+          "token_reduction": -0.023,
+          "tokens_before": 778,
+          "tokens_after": 796
+        }
+      },
+      "ctxpipe": {
+        "tokens_after": 178,
+        "pins_preserved": true,
+        "secret_leaked": false,
+        "pair_splits": 0,
+        "metrics": {
+          "goals_retained": 1,
+          "constraints_retained": 1,
+          "decisions_retained": 1,
+          "errors_kept_verbatim": [
+            0,
+            0
+          ],
+          "token_reduction": 0.771,
+          "tokens_before": 778,
+          "tokens_after": 178
+        }
+      }
+    },
+    {
+      "fixture": "session-b.jsonl",
+      "keep_recent": 4,
+      "tokens_before": 69,
+      "naive": {
+        "tokens_after": 75,
+        "pins_preserved": true,
+        "secret_leaked": false,
+        "pair_splits": 0,
+        "metrics": {
+          "goals_retained": 1,
+          "constraints_retained": 0,
+          "decisions_retained": 1,
+          "errors_kept_verbatim": [
+            0,
+            0
+          ],
+          "token_reduction": -0.087,
+          "tokens_before": 69,
+          "tokens_after": 75
+        }
+      },
+      "ctxpipe": {
+        "tokens_after": 57,
+        "pins_preserved": true,
+        "secret_leaked": false,
+        "pair_splits": 0,
+        "metrics": {
+          "goals_retained": 1,
+          "constraints_retained": 0,
+          "decisions_retained": 1,
+          "errors_kept_verbatim": [
+            0,
+            0
+          ],
+          "token_reduction": 0.174,
+          "tokens_before": 69,
+          "tokens_after": 57
+        }
+      }
+    },
+    {
+      "fixture": "original.jsonl",
+      "keep_recent": 4,
+      "tokens_before": 778,
+      "naive": {
+        "tokens_after": 796,
+        "pins_preserved": false,
+        "secret_leaked": true,
+        "pair_splits": 0,
+        "metrics": {
+          "goals_retained": 1,
+          "constraints_retained": 1,
+          "decisions_retained": 1,
+          "errors_kept_verbatim": [
+            0,
+            0
+          ],
+          "token_reduction": -0.023,
+          "tokens_before": 778,
+          "tokens_after": 796
+        }
+      },
+      "ctxpipe": {
+        "tokens_after": 178,
+        "pins_preserved": true,
+        "secret_leaked": false,
+        "pair_splits": 0,
+        "metrics": {
+          "goals_retained": 1,
+          "constraints_retained": 1,
+          "decisions_retained": 1,
+          "errors_kept_verbatim": [
+            0,
+            0
+          ],
+          "token_reduction": 0.771,
+          "tokens_before": 778,
+          "tokens_after": 178
+        }
+      }
+    }
+  ],
+  "tool_heavy": {
+    "fixture": "tool-heavy (synthetic)",
+    "tokens_before": 1261,
+    "tokens_after": 121,
+    "error_result_preserved": true,
+    "ok_results_dropped": 6,
+    "metrics": {
+      "goals_retained": 1,
+      "constraints_retained": 1,
+      "decisions_retained": 0,
+      "errors_kept_verbatim": [
+        1,
+        1
+      ],
+      "token_reduction": 0.904,
+      "tokens_before": 1261,
+      "tokens_after": 121
+    }
+  },
+  "chained": {
+    "fixture": "chained session-a (3 rounds)",
+    "rounds": [
+      {
+        "round": 1,
+        "valid_json": true,
+        "goals_in_high": 1,
+        "tokens_after": 178,
+        "goals_header_count": 0
+      },
+      {
+        "round": 2,
+        "valid_json": true,
+        "goals_in_high": 1,
+        "tokens_after": 345,
+        "goals_header_count": 0
+      },
+      {
+        "round": 3,
+        "valid_json": true,
+        "goals_in_high": 1,
+        "tokens_after": 505,
+        "goals_header_count": 0
+      }
+    ]
+  },
+  "profiles": [
+    {
+      "profile": "conservative",
+      "tokens_after": 178,
+      "summary_high_chars": 313,
+      "summary_medium_chars": 87,
+      "summary_low_chars": 87
+    },
+    {
+      "profile": "aggressive",
+      "tokens_after": 151,
+      "summary_high_chars": 313,
+      "summary_medium_chars": 87,
+      "summary_low_chars": 0
+    },
+    {
+      "profile": "code-heavy",
+      "tokens_after": 178,
+      "summary_high_chars": 313,
+      "summary_medium_chars": 87,
+      "summary_low_chars": 87
+    }
+  ]
+}

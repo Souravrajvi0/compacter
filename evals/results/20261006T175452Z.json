@@ -1,0 +1,16 @@
+[
+  {
+    "task": "compress tool-heavy session, keep constraints and goals",
+    "passed": true,
+    "explanation": "tagged goal/decision messages survive verbatim; drop_always content is absent.",
+    "provider": "stub",
+    "expected": "PASS \u2014 goal + constraint survive as pinned, verbatim messages; huge logs are dropped, the secret is excluded."
+  },
+  {
+    "task": "drop experimental branches, preserve decisions and file paths",
+    "passed": true,
+    "explanation": "tagged goal/decision messages survive verbatim; drop_always content is absent.",
+    "provider": "stub",
+    "expected": "PASS \u2014 decision/path/goal messages are keep_verbatim; drop_ok branch text is discarded."
+  }
+]

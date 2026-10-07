@@ -1,0 +1,18 @@
+# Conservative: keep maximum signal. Larger recent window, high detail, never drop tool results.
+scopes:
+  - match: "tool_result"
+    rule:
+      summarize_detail: high
+      truncate_result_to: 800
+      drop_result_if: never
+  - match: "role:user"
+    rule:
+      keep_verbatim_until: 5   # user messages stay verbatim for 5 compactions
+  - match: "tag:experiment"
+    rule:
+      summarize_detail: medium
+
+auto_tagging:
+  enabled: true
+  min_confidence: 0.75
+  set_keep_verbatim_for_tags: ["goal", "constraint"]

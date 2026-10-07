@@ -1,0 +1,22 @@
+# Code-heavy: preserve code, paths, files, failures. Compress narrative discussion.
+scopes:
+  - match: "tool_result"
+    rule:
+      summarize_detail: medium
+      keep_result_sections: ["errors", "failure"]   # keep only error sections verbatim-ish
+      truncate_result_to: 400
+  - match: "file:*.py"
+    rule:
+      summarize_detail: high
+  - match: "file:*.log"
+    rule:
+      summarize_detail: low
+      drop_result_if: no_errors
+  - match: "tag:experiment"
+    rule:
+      summarize_detail: low
+
+auto_tagging:
+  enabled: true
+  min_confidence: 0.7
+  set_keep_verbatim_for_tags: ["goal", "constraint", "decision"]

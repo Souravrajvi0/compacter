@@ -1,0 +1,7 @@
+{"timestamp":"2026-10-01T00:00:00Z","type":"session_meta","payload":{"session_id":"s1","cwd":"@PROJECT@","originator":"codex-tui","cli_version":"0.144.6"}}
+{"timestamp":"2026-10-01T00:00:01Z","type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"list the files"}]}}
+{"timestamp":"2026-10-01T00:00:02Z","type":"response_item","payload":{"type":"reasoning","id":"rs_1","summary":[],"encrypted_content":"gAAAA"}}
+{"timestamp":"2026-10-01T00:00:03Z","type":"response_item","payload":{"type":"function_call","id":"fc_1","name":"shell_command","arguments":"{\"command\":\"ls\"}","call_id":"call_1"}}
+broken line that is not json
+{"timestamp":"2026-10-01T00:00:04Z","type":"response_item","payload":{"type":"function_call_output","call_id":"call_1","output":"a.py\nb.py"}}
+{"timestamp":"2026-10-01T00:00:05Z","type":"response_item","payload":{"type":"message","role":"assistant","content":[{"type":"output_text","text":"there are two files"}]}}

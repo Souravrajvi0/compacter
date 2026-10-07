@@ -1,0 +1,7 @@
+{"schema": 1, "id": "demo2", "agent": "generic-api", "project": "demo", "created_at": "2026-10-06T00:00:00+00:00", "system": "", "tool_schemas": [], "meta": {}}
+{"id": "m1", "role": "user", "content": "We tried three approaches. Final decision: ship the JSONL store, not SQLite.", "tags": ["decision"], "policy": "keep_verbatim", "timestamp": "2026-10-06T00:01:00+00:00", "meta": {}}
+{"id": "m2", "role": "assistant", "content": "Branch experiment with SQLite failed: schema migration cost too high.", "tags": [], "policy": "drop_ok", "timestamp": "2026-10-06T00:02:00+00:00", "meta": {}}
+{"id": "m3", "role": "user", "content": "Primary entry point is src/ctxpipe/cli.py, tests in tests/.", "tags": ["important"], "policy": "keep_verbatim", "timestamp": "2026-10-06T00:03:00+00:00", "meta": {}}
+{"id": "m4", "role": "assistant", "content": "Understood; dropping the SQLite branch from future context.", "tags": [], "policy": "summarize_ok", "timestamp": "2026-10-06T00:04:00+00:00", "meta": {}}
+{"id": "m5", "role": "user", "content": "Goal: keep the CLI under 5 subcommands.", "tags": ["goal"], "policy": "keep_verbatim", "timestamp": "2026-10-06T00:05:00+00:00", "meta": {}}
+{"id": "m6", "role": "assistant", "content": "Noted.", "tags": [], "policy": "summarize_ok", "timestamp": "2026-10-06T00:06:00+00:00", "meta": {}}

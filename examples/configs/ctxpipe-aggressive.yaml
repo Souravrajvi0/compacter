@@ -1,0 +1,19 @@
+# Aggressive: smallest possible context. Low detail, drop successful tool results, tight truncation.
+scopes:
+  - match: "tool_result"
+    rule:
+      summarize_detail: low
+      truncate_result_to: 30
+      drop_result_if: no_errors
+  - match: "file:*.log"
+    rule:
+      summarize_detail: low
+      drop_result_if: always
+  - match: "role:assistant"
+    rule:
+      summarize_detail: low
+
+auto_tagging:
+  enabled: true
+  min_confidence: 0.8
+  set_keep_verbatim_for_tags: []   # tags only, nothing pinned automatically

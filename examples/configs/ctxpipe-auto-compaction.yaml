@@ -1,0 +1,28 @@
+# Automatic compaction. Off unless enabled: true.
+# 65% is an *evaluation* threshold, not a guaranteed compaction event.
+auto_compaction:
+  enabled: true
+
+  context_window: 200000          # your model's usable window, in tokens
+  evaluate_at_percent: 65         # start evaluating (may still skip)
+  recommend_at_percent: 75        # recommend more strongly; also lifts the re-arm block
+  force_at_percent: 90            # emergency: apply if verification passes, never asks
+  rearm_below_percent: 45         # after a compaction, stay quiet until pressure dips below this
+
+  reserve_output_tokens: 12000    # counted in effective pressure
+  reserve_tool_tokens: 16000      # counted only while a tool pair is open
+
+  keep_recent: 6                  # recent messages kept verbatim
+  min_projected_reduction: 0.30   # skip when the plan would not save this much
+  min_reduction: 0.25             # reject candidates that save less than this
+  min_turns_since_compaction: 12
+  min_new_tokens: 15000
+  cooldown_turns: 12
+
+  ask_user: smart                 # always | smart | never | critical-only
+  default_action: postpone        # postpone | skip | apply  (empty answer / EOF at the prompt)
+  noninteractive_action: postpone # postpone | apply-if-valid | disable  (no TTY; emergency always applies if valid)
+
+  verify_before_apply: true
+  rollback_on_failure: true       # keep a snapshot: `ctxpipe auto-compact rollback`
+  max_attempts: 2                 # circuit breaker

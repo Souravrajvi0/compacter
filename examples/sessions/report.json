@@ -1,0 +1,14 @@
+{
+  "compaction_1": {
+    "pinned": 2,
+    "summarized": 3,
+    "dropped": 2,
+    "excluded": 1
+  },
+  "compaction_2": {
+    "pinned": 2,
+    "summarized": 4,
+    "dropped": 0,
+    "excluded": 0
+  }
+}

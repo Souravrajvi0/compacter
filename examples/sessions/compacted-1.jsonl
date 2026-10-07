@@ -1,0 +1,8 @@
+{"schema": 1, "id": "5983d5122fda", "agent": "generic-api", "project": "C:\\Users\\soura\\Desktop\\Compacter\\examples", "created_at": "2026-10-06T18:28:10+00:00", "system": "", "tool_schemas": [], "meta": {}}
+{"id": "c8ac2731", "role": "user", "content": "Build me a JSONL session compaction tool for CLI agents.", "tags": ["goal"], "policy": "keep_verbatim", "timestamp": "2026-10-06T18:28:10+00:00", "meta": {}}
+{"id": "10804d4d", "role": "user", "content": "Constraint: never let a pasted secret reach the agent again.", "tags": ["constraint"], "policy": "keep_verbatim", "timestamp": "2026-10-06T18:28:10+00:00", "meta": {}}
+{"id": "5405316d", "role": "user", "content": "[ctxpipe compaction summary of earlier conversation]\n## Progress\n- (stub summary) folded 5 messages into one block.\n- Goals/constraints remain pinned above.", "tags": ["compaction_summary"], "policy": "summarize_ok", "timestamp": "2026-10-06T18:28:10+00:00", "meta": {}}
+{"id": "dce69974", "role": "assistant", "content": "Added eval judge: ctxpipe eval --task ...", "tags": [], "policy": "summarize_ok", "timestamp": "2026-10-06T18:28:10+00:00", "meta": {}}
+{"id": "055a6650", "role": "user", "content": "Now add an Aider adapter.", "tags": [], "policy": "summarize_ok", "timestamp": "2026-10-06T18:28:10+00:00", "meta": {}}
+{"id": "4d752949", "role": "assistant", "content": "Aider adapter parses #### user / #### assistant blocks.", "tags": [], "policy": "summarize_ok", "timestamp": "2026-10-06T18:28:10+00:00", "meta": {}}
+{"id": "36aaf486", "role": "user", "content": "Wrap mode: /compact should be intercepted.", "tags": [], "policy": "summarize_ok", "timestamp": "2026-10-06T18:28:10+00:00", "meta": {}}

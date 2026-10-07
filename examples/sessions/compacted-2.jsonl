@@ -1,0 +1,7 @@
+{"schema": 1, "id": "5983d5122fda", "agent": "generic-api", "project": "C:\\Users\\soura\\Desktop\\Compacter\\examples", "created_at": "2026-10-06T18:28:10+00:00", "system": "", "tool_schemas": [], "meta": {}}
+{"id": "c8ac2731", "role": "user", "content": "Build me a JSONL session compaction tool for CLI agents.", "tags": ["goal"], "policy": "keep_verbatim", "timestamp": "2026-10-06T18:28:10+00:00", "meta": {}}
+{"id": "10804d4d", "role": "user", "content": "Constraint: never let a pasted secret reach the agent again.", "tags": ["constraint"], "policy": "keep_verbatim", "timestamp": "2026-10-06T18:28:10+00:00", "meta": {}}
+{"id": "fa3c92e6", "role": "user", "content": "[ctxpipe compaction summary of earlier conversation]\n## Progress\n- (stub summary) folded 6 messages into one block.\n- Goals/constraints remain pinned above.", "tags": ["compaction_summary"], "policy": "summarize_ok", "timestamp": "2026-10-06T18:28:10+00:00", "meta": {}}
+{"id": "36aaf486", "role": "user", "content": "Wrap mode: /compact should be intercepted.", "tags": [], "policy": "summarize_ok", "timestamp": "2026-10-06T18:28:10+00:00", "meta": {}}
+{"id": "542f0186", "role": "user", "content": "Day 2: Codex sessions import works.", "tags": [], "policy": "summarize_ok", "timestamp": "2026-10-06T18:28:10+00:00", "meta": {}}
+{"id": "8201b580", "role": "assistant", "content": "Rollout parser handles function_call blocks.", "tags": [], "policy": "summarize_ok", "timestamp": "2026-10-06T18:28:10+00:00", "meta": {}}
