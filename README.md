@@ -2,7 +2,7 @@
 
 **Context control for CLI coding agents. You decide what the agent remembers.**
 
-> Status: v2.1.1. 116 tests. Adapters: Claude Code, Codex, Aider, generic JSON.
+> Status: v2.1.1. 116 tests. Adapters: Claude Code, Codex, Aider, opencode, generic JSON.
 
 ## The problem
 
@@ -224,7 +224,7 @@ production context-engineering, made explicit and portable across agents.
              |
         Adapter interface  <-- one module per agent
    +---------+---------+----------+
-   | claude-code | aider | codex | generic-api
+   | claude-code | aider | codex | opencode | generic-api
    +-------------+-------+-------+
              |
        agent's native session format
@@ -243,7 +243,7 @@ Principles:
 
 ```
 src/ctxpipe/core/       models, store, compaction, autocontrol, tokens, prompts
-src/ctxpipe/adapters/   base + registry, claude_code, codex, aider, generic_api
+src/ctxpipe/adapters/   base + registry, claude_code, codex, aider, opencode, generic_api
 src/ctxpipe/llm/        summarizer providers (Anthropic, key pool)
 src/ctxpipe/cli.py      argparse front end
 src/ctxpipe/wrapper.py  live wrapper mode
@@ -268,7 +268,7 @@ To add an adapter, see CONTRIBUTING.md.
 ## Status
 
 - v2.0.0: rules engine, scoped policies, structured layered summaries, auto-tag, profiles, eval metrics
-- Adapters: Claude Code, Codex, Aider, generic JSON
+- Adapters: Claude Code, Codex, Aider, opencode, generic JSON
 - 44 tests passing
 - Next bets: delta compaction (`--mode delta`), more adapters, TUI
 
