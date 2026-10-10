@@ -76,3 +76,18 @@ def test_aider_crlf_and_nul_bytes(tmp_path: Path):
     s = aider.AiderAdapter().read(tmp_path)
     assert [m.role for m in s.messages] == ["user", "assistant"]
     assert "hello" in s.messages[0].content
+
+
+def test_main_survives_a_legacy_console_encoding(monkeypatch, capsys):
+    import io
+    import sys
+
+    from compacter import cli
+
+    raw = io.BytesIO()
+    monkeypatch.setattr(sys, "stdout", io.TextIOWrapper(raw, encoding="cp1252", errors="strict"))
+    monkeypatch.setattr(sys, "stderr", io.TextIOWrapper(io.BytesIO(), encoding="cp1252", errors="strict"))
+    cli._utf8_stdio()
+    print("a \u2192 b")
+    sys.stdout.flush()
+    assert "\u2192".encode("utf-8") in raw.getvalue()

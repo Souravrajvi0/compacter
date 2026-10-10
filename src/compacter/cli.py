@@ -770,7 +770,17 @@ def build_parser() -> argparse.ArgumentParser:
     return ap
 
 
+def _utf8_stdio() -> None:
+    """Summaries contain characters (arrows, quotes) a legacy Windows code page cannot print."""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
+
+
 def main(argv: list[str] | None = None) -> int:
+    _utf8_stdio()
     args = build_parser().parse_args(argv)
     try:
         return args.fn(args)
