@@ -1,6 +1,6 @@
 {
   "name": "compacter",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Policy-based context control for CLI coding agents (Claude Code, Codex, opencode): choose what gets compacted, carry context between chats.",
   "bin": { "compacter": "bin/compacter.js" },
   "files": ["bin", "README.md"],
