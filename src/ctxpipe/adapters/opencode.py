@@ -66,6 +66,8 @@ class OpencodeAdapter(Adapter):
         return sqlite3.connect(str(DB_FILE))
 
     def latest_session_id(self, project: Path) -> str:
+        if explicit := os.environ.get("CTXPIPE_OPENCODE_SESSION"):
+            return explicit
         want = _norm_dir(str(project.resolve()))
         with self._db() as c:
             rows = c.execute(
@@ -109,7 +111,7 @@ class OpencodeAdapter(Adapter):
                 content = "\n".join(texts)
                 if not content.strip():
                     continue
-                meta: dict[str, Any] = {}
+                meta: dict[str, Any] = {"source_id": mid}
                 if pair_ids:
                     meta["pair_ids"] = pair_ids
                 created = ((m.get("time") or {}).get("created") or 0) / 1000

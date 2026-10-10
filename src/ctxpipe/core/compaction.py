@@ -104,8 +104,9 @@ def truncate_result(content: str, rule: Rule) -> str:
     return content
 
 
-def plan(session: Session, keep_recent: int = 6, scopes: list[ScopeRule] | None = None
-         ) -> CompactionPlan:
+def plan(session: Session, keep_recent: int = 6, scopes: list[ScopeRule] | None = None,
+         only_ids: set[str] | None = None) -> CompactionPlan:
+    """only_ids: when given, older messages outside it are kept verbatim (user's checklist)."""
     scopes = scopes or []
     compaction_count = len(session.meta.get("compactions", []))
     p = CompactionPlan(excluded=[m for m in session.messages if m.policy is Policy.DROP_ALWAYS])
@@ -119,7 +120,7 @@ def plan(session: Session, keep_recent: int = 6, scopes: list[ScopeRule] | None 
         rule = effective_rule(m, scopes)
         age = len(session.messages) - idx_in_session[id(m)]
 
-        pinned = m.is_pinned
+        pinned = m.is_pinned or (only_ids is not None and m.id not in only_ids)
         if rule.keep_verbatim_until is not None:
             pinned = pinned or compaction_count < rule.keep_verbatim_until
         # pair-level: a strict keep_result rule from partner pins the pair too

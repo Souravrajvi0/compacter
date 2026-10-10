@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -66,6 +67,36 @@ def cmd_drop_last(args: argparse.Namespace) -> int:
     store.save(s, project)
     print(f"marked last {args.n} messages as drop_always")
     return 0
+
+
+def _choose_messages(args, s, keep_recent, scopes):
+    """--select / --only: ids the user chose to compact (None = no restriction)."""
+    if not (args.select or args.only or args.only_ids):
+        return None
+    base = compaction.plan(s, keep_recent=keep_recent, scopes=scopes)
+    ok = {m.id for m in base.to_summarize + base.dropped}
+    rows = [(i, m) for i, m in enumerate(s.messages) if m.id in ok]
+    if not rows:
+        print("no compactable messages outside the keep-recent window")
+        return set()
+    if args.only_ids:
+        raw = sys.stdin.read() if args.only_ids == "-" else args.only_ids
+        wanted = {t for t in raw.replace(",", " ").split() if t}
+        return {m.id for _, m in rows if m.id in wanted or m.meta.get("source_id") in wanted}
+    if args.only:
+        from .tui import parse_ranges
+
+        try:
+            chosen = parse_ranges(args.only, len(s.messages))
+        except ValueError as e:
+            raise SystemExit(f"--only: {e}")
+        return {m.id for i, m in rows if i in chosen}
+    if not (sys.stdin.isatty() and sys.stdout.isatty()):
+        raise SystemExit("--select needs an interactive terminal; use --only 0,3-5 instead")
+    from .tui import pick_messages
+
+    picked = pick_messages([m for _, m in rows], [i for i, _ in rows], set(ok))
+    return "cancelled" if picked is None else picked
 
 
 def cmd_compact(args: argparse.Namespace) -> int:
@@ -179,7 +210,11 @@ def cmd_compact(args: argparse.Namespace) -> int:
     if args.threshold and visible_tokens <= args.threshold:
         print(f"~{visible_tokens} tokens, under --threshold {args.threshold}; nothing to do")
         return 0
-    p = compaction.plan(s, keep_recent=keep_recent, scopes=cfg.scopes)
+    only_ids = _choose_messages(args, s, keep_recent, cfg.scopes)
+    if only_ids == "cancelled":
+        print("cancelled; nothing changed")
+        return 1
+    p = compaction.plan(s, keep_recent=keep_recent, scopes=cfg.scopes, only_ids=only_ids)
     print(f"pinned={len(p.pinned)} summarize={len(p.to_summarize)} "
           f"dropped={len(p.dropped)} excluded={len(p.excluded)} recent={len(p.recent)}")
     previous = None
@@ -208,6 +243,8 @@ def cmd_compact(args: argparse.Namespace) -> int:
         "tokens_after": compaction.tokens_after(view),
     })
     store.save(view, project)
+    if new_id := view.meta.get("new_session_id"):
+        print(f"CTXPIPE_NEW_SESSION={new_id}")
     print(f"wrote compacted session -> {out}; master transcript updated at {store.store_path(project)}")
     return 0
 
@@ -382,6 +419,116 @@ def cmd_wrap(args: argparse.Namespace) -> int:
                        auto_compact=args.auto_compact)
 
 
+def cmd_install_opencode(args: argparse.Namespace) -> int:
+    """Install (or remove) the /compacter slash command for the opencode TUI."""
+    import shutil
+
+    cfg_dir = Path(args.config_dir).expanduser() if args.config_dir else Path.home() / ".config" / "opencode"
+    dest = cfg_dir / "ctxpipe" / "compacter.mjs"
+    tui_json = cfg_dir / "tui.json"
+    spec = dest.resolve().as_uri()
+    try:
+        data = json.loads(tui_json.read_text(encoding="utf-8")) if tui_json.exists() else {}
+    except ValueError:
+        print(f"{tui_json} has comments/invalid JSON; add this to it by hand:")
+        print(f'  "plugin": ["{spec}"]')
+        return 1
+    plugins = [p for p in data.get("plugin", []) if p != spec]
+    if args.uninstall:
+        data["plugin"] = plugins
+        if not plugins:
+            data.pop("plugin")
+        dest.unlink(missing_ok=True)
+        print(f"removed {dest} and its entry in {tui_json}")
+    else:
+        src = Path(__file__).parent / "integrations" / "opencode_tui.mjs"
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        exe = shutil.which("ctxpipe")
+        cmd = [Path(exe).as_posix()] if exe else [Path(sys.executable).as_posix(), "-m", "ctxpipe"]
+        code = src.read_text(encoding="utf-8").replace(': ["ctxpipe"] // CTXPIPE_CMD', f": {json.dumps(cmd)} // CTXPIPE_CMD")
+        dest.write_text(code, encoding="utf-8")
+        data.setdefault("$schema", "https://opencode.ai/tui.json")
+        data["plugin"] = [*plugins, spec]
+        print(f"installed {dest}")
+        print(f"registered in {tui_json}")
+        print("restart opencode, then type /compacter")
+    tui_json.parent.mkdir(parents=True, exist_ok=True)
+    tui_json.write_text(json.dumps(data, indent=2) + os.linesep, encoding="utf-8")
+    return 0
+
+
+def _hook_command(agent: str) -> str:
+    import shutil
+
+    exe = shutil.which("ctxpipe")
+    base = f'"{Path(exe).as_posix()}"' if exe else f'"{Path(sys.executable).as_posix()}" -m ctxpipe'
+    return f"{base} hook --agent {agent}"
+
+
+FALLBACK_COMMAND = """---
+description: Choose which messages to compact (ctxpipe)
+---
+The ctxpipe hook normally handles this command before it reaches you. If you are reading this,
+it is not installed: run `ctxpipe install-claude-code` in a terminal, then retry.
+"""
+
+
+def cmd_install_claude_code(args: argparse.Namespace) -> int:
+    """Register the /compacter prompt hook in ~/.claude/settings.json."""
+    import shutil
+
+    home = Path(args.config_dir).expanduser() if args.config_dir else Path.home() / ".claude"
+    path = home / "settings.json"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    except ValueError:
+        print(f"{path} is not plain JSON; add a UserPromptSubmit hook running:")
+        print(f"  {_hook_command('claude-code')}")
+        return 1
+    groups = data.setdefault("hooks", {}).setdefault("UserPromptSubmit", [])
+    mine = lambda g: any(" hook --agent claude-code" in h.get("command", "") and "ctxpipe" in h.get("command", "")
+                         for h in g.get("hooks", []))
+    groups[:] = [g for g in groups if not mine(g)]
+    cmd_file = home / "commands" / "compacter.md"
+    if args.uninstall:
+        cmd_file.unlink(missing_ok=True)
+        print(f"removed the /compacter hook from {path}")
+    else:
+        groups.append({"hooks": [{"type": "command", "command": _hook_command("claude-code"), "timeout": 180}]})
+        cmd_file.parent.mkdir(parents=True, exist_ok=True)
+        cmd_file.write_text(FALLBACK_COMMAND, encoding="utf-8")
+        print(f"registered the /compacter hook in {path}")
+        print("restart Claude Code, then type /compacter")
+    if not groups:
+        data["hooks"].pop("UserPromptSubmit")
+    if not data["hooks"]:
+        data.pop("hooks")
+    if path.exists():
+        shutil.copyfile(path, path.with_suffix(".json.ctxpipe-bak"))
+    home.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2) + os.linesep, encoding="utf-8")
+    return 0
+
+
+def cmd_install_codex(args: argparse.Namespace) -> int:
+    """Print the Codex hook block (not auto-written: untested against your Codex build)."""
+    cmd = _hook_command("codex").replace("\\", "/")
+    print("Add this to ~/.codex/config.toml (Codex hooks), then restart Codex:")
+    print()
+    print("[[hooks.UserPromptSubmit]]")
+    print("[[hooks.UserPromptSubmit.hooks]]")
+    print('type = "command"')
+    print(f"command = '{cmd}'")
+    print("timeout = 180")
+    return 0
+
+
+def cmd_hook(args: argparse.Namespace) -> int:
+    from . import hook
+
+    return hook.run(args.agent, keep_recent=args.keep_recent, llm_name=args.llm)
+
+
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(prog="ctxpipe", description=__doc__)
     ap.add_argument("--version", action="version", version=__version__)
@@ -425,6 +572,13 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--apply-if-valid", action="store_true",
                     help="automatic compaction only when verification passes (never asks)")
     sp.add_argument("--review", choices=["summary", "items", "diff"], default=None)
+    sp.add_argument("--select", action="store_true",
+                    help="interactive checklist: tick the messages to compact; the rest stay verbatim")
+    sp.add_argument("--only", default=None, metavar="RANGES",
+                    help="compact only these message indexes, e.g. 0,3-5,-2 (others stay verbatim)")
+    sp.add_argument("--only-ids", default=None, metavar="IDS",
+                    help="compact only these message ids (ctxpipe or agent ids, comma/space "
+                         "separated; '-' reads them from stdin). Used by the opencode plugin")
     sp.add_argument("--llm", default="anthropic")
     sp.set_defaults(fn=cmd_compact)
 
@@ -451,6 +605,25 @@ def build_parser() -> argparse.ArgumentParser:
                     help="automatic compaction: bare flag=config, or ask/apply/off")
     sp.add_argument("command", nargs=argparse.REMAINDER, help="agent command after `--`")
     sp.set_defaults(fn=cmd_wrap)
+
+    sp = sub.add_parser("install-opencode", help="add the /compacter slash command to opencode")
+    sp.add_argument("--uninstall", action="store_true")
+    sp.add_argument("--config-dir", default=None, help="opencode config dir (default ~/.config/opencode)")
+    sp.set_defaults(fn=cmd_install_opencode)
+
+    sp = sub.add_parser("install-claude-code", help="add the /compacter slash command to Claude Code")
+    sp.add_argument("--uninstall", action="store_true")
+    sp.add_argument("--config-dir", default=None, help="Claude config dir (default ~/.claude)")
+    sp.set_defaults(fn=cmd_install_claude_code)
+
+    sp = sub.add_parser("install-codex", help="print the /compacter hook block for Codex")
+    sp.set_defaults(fn=cmd_install_codex)
+
+    sp = sub.add_parser("hook", help="prompt-hook entry point (JSON on stdin); used by the agents")
+    sp.add_argument("--agent", required=True, choices=["claude-code", "codex"])
+    sp.add_argument("--keep-recent", type=int, default=6)
+    sp.add_argument("--llm", default="anthropic")
+    sp.set_defaults(fn=cmd_hook)
 
     acp = sub.add_parser("auto-compact", help="manage automatic compaction")
     acpsub = acp.add_subparsers(dest="acmd", required=True)
