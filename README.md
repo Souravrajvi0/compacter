@@ -39,7 +39,8 @@ the summary before the agent ever sees it.
 ```bash
 pip install .                     # from this repo; PyPI later
 pip install ".[dev,anthropic]"    # with tests + Anthropic summarizer
-export ANTHROPIC_API_KEY=...      # only needed for `compact` and `eval`
+# No API key needed: summaries are written by the agent you already use (claude / codex / opencode).
+# Optional: export ANTHROPIC_API_KEY=... and pass --llm anthropic to use the API instead.
 ```
 
 ## Quickstart
@@ -199,6 +200,51 @@ ctxpipe compact --auto                 # one automatic evaluation (prompts if ne
 ctxpipe compact --apply-if-valid       # automatic, never asks, applies only if verified
 ctxpipe wrap --agent claude-code --auto-compact -- claude   # bare flag = use config; or ask|apply|off
 ```
+
+## Carry chosen messages into a new chat
+
+You don't have to compact a whole chat. Pick just the messages worth keeping (the same ✓ checklist,
+or index ranges), and bring only those into a fresh chat. The original chat is never changed.
+
+```bash
+ctxpipe carry --agent opencode                  # checklist: tick messages, they are summarized
+ctxpipe carry --agent codex --only 3-9,14 --new # ranges; also writes a ready-to-resume new chat
+ctxpipe carry --agent claude-code --only 0 --verbatim --name vault   # carry word for word
+```
+
+In Claude Code or Codex (with the hook installed):
+
+```
+/compacter carry                       list every message
+/compacter carry 3-9,14 as auth-fix    summarize those into a pack named auth-fix
+/compacter carry 3-9 verbatim new      carry word for word and write a new chat
+/compacter pack load auth-fix          then, in the new chat, bring the pack in
+```
+
+## Context packs: reuse a compaction in a new chat
+
+A compaction is worth keeping. Save it as a **pack** and start any future chat from it, in any
+project and with any agent. Packs hold the latest summary plus the messages you pinned
+(goal / constraint / keep_verbatim) and live in `~/.ctxpipe/packs` (override with `CTXPIPE_HOME`).
+
+```bash
+ctxpipe compact --apply                      # compact a chat as usual
+ctxpipe pack save login-fix --note "auth work"
+ctxpipe pack list
+ctxpipe new --agent claude-code --from login-fix   # a brand-new chat that starts with the pack
+```
+
+Inside Claude Code (with `ctxpipe install-claude-code`), no terminal switch is needed:
+
+```
+/compacter pack save login-fix     save the latest compaction
+/compacter pack load login-fix     add the pack to THIS chat (use it first thing in a new chat)
+/compacter pack new login-fix      or write a fresh chat that starts with it
+```
+
+A seeded chat keeps the structured summary, so compacting it later merges the pack into the
+next summary instead of losing it. Resume with `claude --resume <id>`, `codex resume --last`,
+or `opencode --session <id>`.
 
 ## Why this exists
 

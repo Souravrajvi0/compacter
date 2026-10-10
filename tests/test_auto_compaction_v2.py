@@ -163,7 +163,7 @@ def _wrapper_project(tmp_path, ratio=0.8, extra_cfg=""):
 
 def test_wrapper_ask_mode_prompts(tmp_path, monkeypatch):
     _wrapper_project(tmp_path)
-    monkeypatch.setattr("ctxpipe.llm.get_llm", lambda name: FakeLLM())
+    monkeypatch.setattr("ctxpipe.llm.get_llm", lambda name="auto", **kw: FakeLLM())
     ui = ScriptUI(["l"])
     rc = wrapper._maybe_auto_compact(tmp_path, "generic-api", "x", 2, "ask", "hello\n", FakeChild(),
                                      ui=ui, interactive=True)
@@ -173,7 +173,7 @@ def test_wrapper_ask_mode_prompts(tmp_path, monkeypatch):
 
 def test_wrapper_apply_mode_never_blocks(tmp_path, monkeypatch):
     _wrapper_project(tmp_path)
-    monkeypatch.setattr("ctxpipe.llm.get_llm", lambda name: FakeLLM())
+    monkeypatch.setattr("ctxpipe.llm.get_llm", lambda name="auto", **kw: FakeLLM())
     rc = wrapper._maybe_auto_compact(tmp_path, "generic-api", "x", 2, "apply", "hello\n", FakeChild(),
                                      interactive=False)
     assert rc == 0  # compacted, child stopped
@@ -182,7 +182,7 @@ def test_wrapper_apply_mode_never_blocks(tmp_path, monkeypatch):
 
 def test_wrapper_apply_if_valid_without_tty(tmp_path, monkeypatch):
     _wrapper_project(tmp_path, extra_cfg="{ask_user: always, noninteractive_action: apply-if-valid}")
-    monkeypatch.setattr("ctxpipe.llm.get_llm", lambda name: FakeLLM())
+    monkeypatch.setattr("ctxpipe.llm.get_llm", lambda name="auto", **kw: FakeLLM())
     # ask_user=always + non-interactive + apply-if-valid used to have no compactor at all
     wrapper._maybe_auto_compact(tmp_path, "generic-api", "x", 2, "config", "hello\n", FakeChild(),
                                 interactive=False)

@@ -32,7 +32,7 @@ class StubLLM:
 def env(tmp_path, monkeypatch):
     fa = FakeAdapter()
     monkeypatch.setattr(hook, "get_adapter", lambda name: fa)
-    monkeypatch.setattr("ctxpipe.llm.get_llm", lambda name="anthropic": StubLLM())
+    monkeypatch.setattr("ctxpipe.llm.get_llm", lambda name="auto", **kw: StubLLM())
     return tmp_path, fa
 
 
@@ -75,3 +75,38 @@ def test_run_emits_block_decision(env, monkeypatch, capsys):
     monkeypatch.setattr("sys.stdin", io.StringIO(json.dumps({"prompt": "hello", "cwd": str(project)})))
     hook.run("claude-code")
     assert capsys.readouterr().out == ""
+
+
+def test_pack_roundtrip_via_hook(env, monkeypatch, tmp_path):
+    from ctxpipe.core import compaction, packs
+    from ctxpipe.core.models import Message, Session
+
+    monkeypatch.setenv("CTXPIPE_HOME", str(tmp_path / "home"))
+    project, fa = env
+    s = Session(agent="claude-code", project=str(project), messages=[
+        Message(role="user", content=f"m{i}") for i in range(8)])
+    p = compaction.plan(s, keep_recent=2)
+    store.save(compaction.rebuild(s, p, '{"summary_high":{"goals":["g1"],"constraints":[],"decisions":[],'
+                                       '"open_tasks":[],"key_files":[]},"summary_medium":"x","summary_low":""}'), project)
+    assert "Saved pack 'demo'" in hook.respond("/compacter pack save demo", project, "claude-code")
+    assert "demo" in hook.respond("/compacter pack list", project, "claude-code")
+    loaded = hook.respond("/compacter pack load demo", project, "claude-code")
+    assert isinstance(loaded, hook.Inject) and "g1" in loaded
+    assert "claude --resume" in hook.respond("/compacter pack new demo", project, "claude-code")
+    assert "No pack named" in hook.respond("/compacter pack delete nope", project, "claude-code")
+    assert "no pack named" in hook.respond("/compacter pack load nope", project, "claude-code").lower()
+
+
+def test_run_injects_context_for_pack_load(env, monkeypatch, capsys, tmp_path):
+    from ctxpipe.core import packs
+
+    monkeypatch.setenv("CTXPIPE_HOME", str(tmp_path / "home"))
+    (packs.pack_dir()).mkdir(parents=True)
+    (packs.pack_dir() / "demo.json").write_text(json.dumps(
+        {"name": "demo", "summary_text": "CODEWORD-1", "summary_json": None, "pinned": []}), encoding="utf-8")
+    project, _ = env
+    monkeypatch.setattr("sys.stdin", io.StringIO(json.dumps({"prompt": "/compacter pack load demo", "cwd": str(project)})))
+    hook.run("claude-code")
+    out = json.loads(capsys.readouterr().out)
+    assert "decision" not in out
+    assert "CODEWORD-1" in out["hookSpecificOutput"]["additionalContext"]

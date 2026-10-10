@@ -34,3 +34,14 @@ def get_adapter(name: str) -> Adapter:
         return _REGISTRY[name]()
     except KeyError:
         raise ValueError(f"unknown agent {name!r}; available: {sorted(_REGISTRY)}") from None
+
+
+def resume_command(agent: str, session_id: str | None, written: Path) -> str:
+    """How to continue on a session an adapter just wrote."""
+    if agent == "claude-code":
+        return f"claude --resume {session_id or written.stem}"
+    if agent == "codex":
+        return "codex resume --last"
+    if agent == "opencode" and session_id:
+        return f"opencode --session {session_id}"
+    return str(written)

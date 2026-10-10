@@ -7,7 +7,7 @@ message_id, session_id, data). message.data.role is "user"/"assistant"; parts
 have types text/tool/reasoning/step-start/step-finish/compaction. Text parts
 are mapped verbatim; tool parts are flattened like the other adapters.
 Writes create a NEW session (new ses_/msg_/prt_ ids) — the original is untouched.
-Resume with `opencode --resume <new session id>`. Schema verified against
+Resume with `opencode --session <new session id>`. Schema verified against
 opencode's sqlite storage circa 2026-10; re-check after upgrades.
 """
 from __future__ import annotations

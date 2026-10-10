@@ -43,7 +43,7 @@ def handle_compact(project: Path, agent: str, llm_name: str, keep_recent: int) -
         s = get_adapter(agent).read(project)
         store.save(s, project)
     p = compaction.plan(s, keep_recent=keep_recent)
-    summary = compaction.summarize(p, get_llm(llm_name))
+    summary = compaction.summarize(p, get_llm(llm_name, agent=agent))
     view = compaction.rebuild(s, p, summary)
     out = get_adapter(agent).write(view, project)
     view.meta.setdefault("compactions", []).append({
@@ -59,7 +59,7 @@ def handle_compact(project: Path, agent: str, llm_name: str, keep_recent: int) -
     print("[ctxpipe] relaunch the agent with --resume to continue on the compacted session")
 
 
-def run(project: Path, agent: str, command: list[str], llm_name: str = "anthropic",
+def run(project: Path, agent: str, command: list[str], llm_name: str = "auto",
         keep_recent: int = 6, auto_compact: str = "off") -> int:
     child = subprocess.Popen(
         command, cwd=project,
@@ -172,7 +172,7 @@ def _maybe_auto_compact(project: Path, agent: str, llm_name: str, keep_recent: i
     def apply_fn(session):
         nonlocal llm
         if llm is None:
-            llm = get_llm(llm_name)
+            llm = get_llm(llm_name, agent=agent)
         p = compaction.plan(session, keep_recent=keep_recent, scopes=cfg.scopes)
         summary = compaction.summarize(p, llm, previous_summary=_previous_summary(session), scopes=cfg.scopes)
         return compaction.rebuild(session, p, summary, scopes=cfg.scopes)

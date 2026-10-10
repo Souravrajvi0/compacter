@@ -150,7 +150,7 @@ def cmd_compact(args: argparse.Namespace) -> int:
             from .core.summary import parse_structured_summary
             from .llm import get_llm
 
-            summary = compaction.summarize(p, get_llm(args.llm), args.target_tokens,
+            summary = compaction.summarize(p, get_llm(args.llm, agent=s.agent), args.target_tokens,
                                            previous_summary=_summary_high_of(s), scopes=cfg.scopes)
             print(review_diff(_summary_high_of(s), parse_structured_summary(summary)))
         return 0
@@ -164,7 +164,7 @@ def cmd_compact(args: argparse.Namespace) -> int:
             cfg.auto_compaction.noninteractive_action = "apply-if-valid"
         s_meta = s
         ctrl = AutoCompactController(s, cfg.auto_compaction)
-        llm = get_llm(args.llm)
+        llm = get_llm(args.llm, agent=s.agent)
         ckpt = capture_checkpoint(s)
 
         def apply_fn(session):
@@ -225,7 +225,7 @@ def cmd_compact(args: argparse.Namespace) -> int:
             except ValueError:
                 previous = None
     summary = compaction.summarize(
-        p, get_llm(args.llm), args.target_tokens, previous_summary=previous,
+        p, get_llm(args.llm, agent=s.agent), args.target_tokens, previous_summary=previous,
         profile=args.profile, scopes=cfg.scopes,
     )
     view = compaction.rebuild(s, p, summary, token_budget=args.target_tokens, scopes=cfg.scopes)
@@ -256,9 +256,9 @@ def cmd_eval(args: argparse.Namespace) -> int:
     project = _project(args)
     s = store.load(project)
     p = compaction.plan(s, keep_recent=args.keep_recent)
-    summary = compaction.summarize(p, get_llm(args.llm), args.target_tokens)
+    summary = compaction.summarize(p, get_llm(args.llm, agent=s.agent), args.target_tokens)
     view = compaction.rebuild(s, p, summary)
-    result = evals.judge(view, args.task, get_llm(args.llm), original=s)
+    result = evals.judge(view, args.task, get_llm(args.llm, agent=s.agent), original=s)
     print("PASS" if result.passed else "FAIL", "-", result.explanation)
     if result.metrics:
         print(json.dumps(result.metrics, indent=2))
@@ -466,10 +466,11 @@ def _hook_command(agent: str) -> str:
 
 
 FALLBACK_COMMAND = """---
-description: Choose which messages to compact (ctxpipe)
+description: Choose which messages to compact, or reuse a saved context pack (ctxpipe)
 ---
-The ctxpipe hook normally handles this command before it reaches you. If you are reading this,
-it is not installed: run `ctxpipe install-claude-code` in a terminal, then retry.
+The ctxpipe hook normally answers this command before it reaches you.
+If a ctxpipe context pack was just added to this chat, confirm that in one short sentence and wait.
+Otherwise tell the user the hook is not installed: run `ctxpipe install-claude-code` in a terminal.
 """
 
 
@@ -529,6 +530,101 @@ def cmd_hook(args: argparse.Namespace) -> int:
     return hook.run(args.agent, keep_recent=args.keep_recent, llm_name=args.llm)
 
 
+def cmd_pack(args: argparse.Namespace) -> int:
+    """Save / list / show / delete context packs (a compaction you can reuse in new chats)."""
+    from .core import packs
+
+    try:
+        if args.action == "save":
+            path = packs.save_pack(args.name, store.load(_project(args)), note=args.note or "")
+            print(f"saved pack {args.name!r} -> {path}")
+        elif args.action == "list":
+            rows = packs.list_packs()
+            if not rows:
+                print("no packs yet; compact a chat, then `ctxpipe pack save NAME`")
+            for r in rows:
+                note = f"  {r['note']}" if r["note"] else ""
+                print(f"{r['name']:<24} {r['created_at']}  {r['agent']:<12} {r['pinned']} pinned{note}")
+        elif args.action == "show":
+            print(packs.render_markdown(packs.load_pack(args.name)))
+        elif args.action == "delete":
+            print("deleted" if packs.delete_pack(args.name) else f"no pack named {args.name!r}")
+    except (ValueError, FileNotFoundError) as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+    return 0
+
+
+def cmd_new(args: argparse.Namespace) -> int:
+    """Start a brand-new chat that begins with a saved context pack."""
+    from .adapters.base import resume_command
+    from .core import packs
+
+    project = _project(args)
+    try:
+        seeded = packs.seed_session(packs.load_pack(args.pack), args.agent, project)
+    except (ValueError, FileNotFoundError) as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+    out = get_adapter(args.agent).write(seeded, project)
+    new_id = seeded.meta.get("new_session_id")
+    if new_id:
+        print(f"CTXPIPE_NEW_SESSION={new_id}")
+    print(f"new {args.agent} chat seeded with pack {args.pack!r} -> {out}")
+    print(f"continue with:  {resume_command(args.agent, new_id, out)}")
+    return 0
+
+
+def cmd_carry(args: argparse.Namespace) -> int:
+    """Pick messages from a chat and carry just those into a new chat."""
+    from . import carry as carry_mod
+    from .tui import parse_ranges, pick_messages
+
+    project = _project(args)
+    s = get_adapter(args.agent).read(project)
+    rows = [(i, m) for i, m in enumerate(s.messages)]
+    if not rows:
+        print("the chat is empty", file=sys.stderr)
+        return 1
+    if args.only_ids:
+        raw = sys.stdin.read() if args.only_ids == "-" else args.only_ids
+        wanted = {t for t in raw.replace(",", " ").split() if t}
+        ids = {m.id for _, m in rows if m.id in wanted or m.meta.get("source_id") in wanted}
+    elif args.only:
+        try:
+            chosen = parse_ranges(args.only, len(s.messages))
+        except ValueError as e:
+            print(f"--only: {e}", file=sys.stderr)
+            return 1
+        ids = {m.id for i, m in rows if i in chosen}
+    else:
+        if not (sys.stdin.isatty() and sys.stdout.isatty()):
+            print("choose messages with --only 0,3-5 or --only-ids (or run in a terminal for the checklist)",
+                  file=sys.stderr)
+            return 1
+        picked = pick_messages([m for _, m in rows], [i for i, _ in rows], set())
+        if picked is None:
+            print("cancelled; nothing changed")
+            return 1
+        ids = picked
+    try:
+        res = carry_mod.carry(s, ids, project, name=args.name, verbatim=args.verbatim, llm_name=args.llm,
+                              to_agent=args.to, new_chat=args.new, scopes=load_config(project).scopes)
+    except (ValueError, RuntimeError, FileNotFoundError) as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+    how = "verbatim" if res.verbatim else "summarized"
+    print(f"carried {res.count} messages ({how}) -> pack {res.name!r}")
+    if res.new_session_id:
+        print(f"CTXPIPE_NEW_SESSION={res.new_session_id}")
+    if res.new_chat:
+        print(f"new chat written -> {res.new_chat}")
+        print(f"continue with:  {res.resume}")
+    else:
+        print(f"start a new chat with it:  ctxpipe new --agent {args.to or args.agent} --from {res.name}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(prog="ctxpipe", description=__doc__)
     ap.add_argument("--version", action="version", version=__version__)
@@ -579,7 +675,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--only-ids", default=None, metavar="IDS",
                     help="compact only these message ids (ctxpipe or agent ids, comma/space "
                          "separated; '-' reads them from stdin). Used by the opencode plugin")
-    sp.add_argument("--llm", default="anthropic")
+    sp.add_argument("--llm", default="auto")
     sp.set_defaults(fn=cmd_compact)
 
     sp = sub.add_parser("auto-tag", help="suggest (or apply) tags from message patterns")
@@ -593,13 +689,13 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--task", required=True, help="the task the agent was working on")
     sp.add_argument("--keep-recent", type=int, default=6)
     sp.add_argument("--target-tokens", type=int, default=1500)
-    sp.add_argument("--llm", default="anthropic")
+    sp.add_argument("--llm", default="auto")
     sp.set_defaults(fn=cmd_eval)
 
     sp = sub.add_parser("wrap", help="launch the agent with stdio passthrough; /compact is intercepted")
     sp.add_argument("--agent", required=True)
     sp.add_argument("--keep-recent", type=int, default=6)
-    sp.add_argument("--llm", default="anthropic")
+    sp.add_argument("--llm", default="auto")
     sp.add_argument("--auto-compact", nargs="?", const="config", default="off",
                     choices=["config", "ask", "apply", "off"],
                     help="automatic compaction: bare flag=config, or ask/apply/off")
@@ -610,6 +706,28 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--uninstall", action="store_true")
     sp.add_argument("--config-dir", default=None, help="opencode config dir (default ~/.config/opencode)")
     sp.set_defaults(fn=cmd_install_opencode)
+
+    sp = sub.add_parser("pack", help="save/list/show/delete context packs (reusable compactions)")
+    sp.add_argument("action", choices=["save", "list", "show", "delete"])
+    sp.add_argument("name", nargs="?", default="")
+    sp.add_argument("--note", default=None, help="short description stored with the pack")
+    sp.set_defaults(fn=cmd_pack)
+
+    sp = sub.add_parser("carry", help="pick messages from a chat and carry just those into a new chat")
+    sp.add_argument("--agent", required=True, help="agent whose latest chat to pick from")
+    sp.add_argument("--to", default=None, help="agent for the new chat (default: same agent)")
+    sp.add_argument("--only", default=None, metavar="RANGES", help="message indexes, e.g. 0,3-5,-2 (default: checklist)")
+    sp.add_argument("--only-ids", default=None, metavar="IDS", help="message ids, or '-' for stdin")
+    sp.add_argument("--verbatim", action="store_true", help="carry the messages as-is instead of summarizing them")
+    sp.add_argument("--name", default=None, help="pack name (default: carry-<timestamp>)")
+    sp.add_argument("--new", action="store_true", help="also write a ready-to-resume new chat")
+    sp.add_argument("--llm", default="auto")
+    sp.set_defaults(fn=cmd_carry)
+
+    sp = sub.add_parser("new", help="start a new chat seeded with a saved context pack")
+    sp.add_argument("--agent", required=True)
+    sp.add_argument("--from", dest="pack", required=True, metavar="PACK")
+    sp.set_defaults(fn=cmd_new)
 
     sp = sub.add_parser("install-claude-code", help="add the /compacter slash command to Claude Code")
     sp.add_argument("--uninstall", action="store_true")
@@ -622,7 +740,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp = sub.add_parser("hook", help="prompt-hook entry point (JSON on stdin); used by the agents")
     sp.add_argument("--agent", required=True, choices=["claude-code", "codex"])
     sp.add_argument("--keep-recent", type=int, default=6)
-    sp.add_argument("--llm", default="anthropic")
+    sp.add_argument("--llm", default="auto")
     sp.set_defaults(fn=cmd_hook)
 
     acp = sub.add_parser("auto-compact", help="manage automatic compaction")

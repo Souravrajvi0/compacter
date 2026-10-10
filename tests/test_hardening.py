@@ -43,7 +43,7 @@ def test_double_compaction_audit_trail(tmp_path: Path, monkeypatch):
     s.messages = [Message("user", f"msg {i}") for i in range(8)]
     store.save(s, tmp_path)
     monkeypatch.setattr(cli, "get_adapter", lambda name: FakeAdapter())
-    monkeypatch.setattr("ctxpipe.llm.get_llm", lambda p: FakeLLM())
+    monkeypatch.setattr("ctxpipe.llm.get_llm", lambda p="auto", **kw: FakeLLM())
 
     assert cli.main(["--project", str(tmp_path), "compact", "--apply", "--keep-recent", "3"]) == 0
     loaded = store.load(tmp_path)

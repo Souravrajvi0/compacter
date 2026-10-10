@@ -25,7 +25,7 @@ def test_wrap_intercepts_compact(tmp_path: Path, monkeypatch, capsys):
     s = Session(agent="generic-api", project=str(tmp_path))
     s.messages = [Message("user", f"m{i}") for i in range(10)]
     store.save(s, tmp_path)
-    monkeypatch.setattr("ctxpipe.llm.get_llm", lambda name: FakeLLM())
+    monkeypatch.setattr("ctxpipe.llm.get_llm", lambda name="auto", **kw: FakeLLM())
 
     echo = [sys.executable, "-u", "-c",
             "import sys\nfor line in sys.stdin:\n    print('echo:', line, end='')\n    sys.stdout.flush()"]

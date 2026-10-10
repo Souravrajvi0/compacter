@@ -68,7 +68,7 @@ def test_master_transcript_updated_after_apply(tmp_path: Path, monkeypatch):
             return project / "out.json"
 
     monkeypatch.setattr(cli, "get_adapter", lambda name: FakeAdapter())
-    monkeypatch.setattr("ctxpipe.llm.get_llm", lambda p: FakeLLM())
+    monkeypatch.setattr("ctxpipe.llm.get_llm", lambda p="auto", **kw: FakeLLM())
 
     rc = cli.main(["--project", str(tmp_path), "compact", "--apply", "--keep-recent", "2"])
     assert rc == 0
