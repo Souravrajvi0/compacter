@@ -986,7 +986,7 @@ class AutoCompactController:
 
         if (is_emergency and interactive and ui is not None and self._meta.get("was_postponed")
                 and not self._meta.get("force_warned")):
-            _say(ui, f"codec: context is {int(pressure * 100)}% full - compaction was postponed; compacting now.")
+            _say(ui, f"compacter: context is {int(pressure * 100)}% full - compaction was postponed; compacting now.")
             self._meta["force_warned"] = True
 
         def candidate_fn() -> Session | None:
@@ -1138,7 +1138,7 @@ class AutoCompactController:
                      candidate_fn: Callable[[], Session | None] | None = None) -> tuple[str, list[dict]]:
         cached: dict[str, Session | None] = {}
         menu = (
-            f"codec: context is {int(assessment.effective_pressure * 100)}% full.\n\n"
+            f"compacter: context is {int(assessment.effective_pressure * 100)}% full.\n\n"
             f"Compaction recommendation:\n"
             f"  Current context:     {assessment.current_tokens:,} tokens\n"
             f"  Projected context:   {assessment.projected_output_tokens:,} tokens\n"

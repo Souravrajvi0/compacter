@@ -1,6 +1,6 @@
 """Anthropic-backed LLM with multi-key rotation.
 
-Requires `pip install codec[anthropic]` and one or more keys in the environment
+Requires `pip install compacter[anthropic]` and one or more keys in the environment
 (see key_pool.keys_from_env).
 """
 from __future__ import annotations
@@ -20,14 +20,14 @@ class AnthropicLLM:
         try:
             import anthropic
         except ImportError as e:  # pragma: no cover
-            raise RuntimeError("install the extra: pip install 'codec[anthropic]'") from e
+            raise RuntimeError("install the extra: pip install 'compacter[anthropic]'") from e
         self._anthropic = anthropic
         keys = keys or keys_from_env("ANTHROPIC")
         if not keys:
-            raise RuntimeError("no API keys: set ANTHROPIC_API_KEY or CODEC_ANTHROPIC_KEYS")
+            raise RuntimeError("no API keys: set ANTHROPIC_API_KEY or COMPACTER_ANTHROPIC_KEYS")
         self._pool = KeyPool(keys)
         self._clients: dict[str, object] = {}
-        self._model = model or os.environ.get("CODEC_MODEL", DEFAULT_MODEL)
+        self._model = model or os.environ.get("COMPACTER_MODEL", DEFAULT_MODEL)
 
     def _classify(self, e: Exception) -> float | None:
         a = self._anthropic

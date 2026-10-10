@@ -15,7 +15,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-NESTED_ENV = "CODEC_NESTED"  # set for the child so our own hooks ignore the helper call
+NESTED_ENV = "COMPACTER_NESTED"  # set for the child so our own hooks ignore the helper call
 TIMEOUT = 300
 _ANSI = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
 
@@ -71,7 +71,7 @@ class AgentLLM:
 
     def complete(self, system: str, user: str, max_tokens: int = 2048) -> str:
         bin_ = _resolve(self.kind)
-        with tempfile.TemporaryDirectory(prefix="codec-llm-") as tmp:
+        with tempfile.TemporaryDirectory(prefix="compacter-llm-") as tmp:
             if self.kind == "claude":
                 cmd = [*bin_, "-p", "--no-session-persistence", "--tools", "", "--max-turns", "1",
                        "--system-prompt", system]
@@ -84,7 +84,7 @@ class AgentLLM:
                 r = _run(cmd, tmp, f"{system}\n\n{user}")
                 out = last.read_text(encoding="utf-8") if last.exists() else r.stdout
             else:
-                prompt = Path(tmp) / "codec-prompt.md"
+                prompt = Path(tmp) / "compacter-prompt.md"
                 prompt.write_text(f"{system}\n\n{user}", encoding="utf-8")
                 cmd = [*bin_, "run", "--dir", tmp, "--format", "json", "-f", str(prompt),
                        "Follow the instructions in the attached file exactly. Output only the requested result."]

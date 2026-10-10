@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from codec.adapters import get_adapter
-from codec.core.models import Message, Session
+from compacter.adapters import get_adapter
+from compacter.core.models import Message, Session
 
 SAMPLE = """# aider chat started at 2026-10-06 10:00:00
 

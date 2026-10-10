@@ -1,11 +1,11 @@
 import json
 from pathlib import Path
 
-from codec.config import ScopeRule
-from codec.core import compaction, store
-from codec.core.autotag import apply, suggest
-from codec.core.models import Message, Policy, Rule, Session
-from codec.core.summary import format_summary_block, parse_structured_summary
+from compacter.config import ScopeRule
+from compacter.core import compaction, store
+from compacter.core.autotag import apply, suggest
+from compacter.core.models import Message, Policy, Rule, Session
+from compacter.core.summary import format_summary_block, parse_structured_summary
 
 
 def msg(role="user", content="x", **kw):
@@ -157,7 +157,7 @@ def test_autotag_suggests_and_apply_sets_tags_only(tmp_path: Path):
 
 
 def test_profiles_have_distinct_prompts():
-    from codec.core.prompts import system_prompt
+    from compacter.core.prompts import system_prompt
 
     a = system_prompt("conservative", 1500)
     b = system_prompt("aggressive", 1500)

@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "codec-cli"
+name = "compacter-agent"
 version = "2.2.0"
 description = "Agent-agnostic, policy-based context control for CLI coding agents."
 readme = "README.md"
@@ -33,11 +33,11 @@ Issues = "https://github.com/Souravrajvi0/compacter/issues"
 Changelog = "https://github.com/Souravrajvi0/compacter/blob/main/CHANGELOG.md"
 
 [project.scripts]
-codec = "codec.cli:main"
-ctxpipe = "codec.cli:main"  # old name, so existing hooks and plugins keep working
+compacter = "compacter.cli:main"
+ctxpipe = "compacter.cli:main"  # old name, so existing hooks and plugins keep working
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/codec"]
+packages = ["src/compacter"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

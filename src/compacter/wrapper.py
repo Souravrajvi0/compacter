@@ -54,9 +54,9 @@ def handle_compact(project: Path, agent: str, llm_name: str, keep_recent: int) -
         "tokens_after": compaction.tokens_after(view),
     })
     store.save(view, project)
-    print(f"\n[codec] compacted ~{p.tokens_before()} -> ~{compaction.tokens_after(view)} tokens")
-    print(f"[codec] wrote {out}")
-    print("[codec] relaunch the agent with --resume to continue on the compacted session")
+    print(f"\n[compacter] compacted ~{p.tokens_before()} -> ~{compaction.tokens_after(view)} tokens")
+    print(f"[compacter] wrote {out}")
+    print("[compacter] relaunch the agent with --resume to continue on the compacted session")
 
 
 def run(project: Path, agent: str, command: list[str], llm_name: str = "auto",
@@ -70,11 +70,11 @@ def run(project: Path, agent: str, command: list[str], llm_name: str = "auto",
     try:
         for line in sys.stdin:
             if is_compact_command(line):
-                print("\n[codec] /compact intercepted", flush=True)
+                print("\n[compacter] /compact intercepted", flush=True)
                 try:
                     handle_compact(project, agent, llm_name, keep_recent)
                 except (FileNotFoundError, LookupError, ValueError, RuntimeError) as e:
-                    print(f"[codec] error: {e}", flush=True)
+                    print(f"[compacter] error: {e}", flush=True)
                 try:
                     child.stdin.close()
                 except (OSError, ValueError):
@@ -184,7 +184,7 @@ def _maybe_auto_compact(project: Path, agent: str, llm_name: str, keep_recent: i
     action = result.get("action")
     if action == "applied":
         out = get_adapter(agent).write(s, project)
-        print(f"\n[codec] auto-compaction applied -> {out}", flush=True)
+        print(f"\n[compacter] auto-compaction applied -> {out}", flush=True)
         try:
             child.stdin.close()
         except (OSError, ValueError):
@@ -197,7 +197,7 @@ def _maybe_auto_compact(project: Path, agent: str, llm_name: str, keep_recent: i
     if action in ("pending_boundary", "cooldown", "cooldown_turns", "cooldown_tokens",
                   "waiting_required", "postponed_noninteractive", "disabled_for_session",
                   "circuit_breaker", "rejected", "skipped", "below_threshold"):
-        print(f"[codec] auto-compact: {action}", flush=True)
+        print(f"[compacter] auto-compact: {action}", flush=True)
     return None
 
 

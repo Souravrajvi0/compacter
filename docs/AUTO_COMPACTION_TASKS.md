@@ -17,11 +17,11 @@ acceptance check you can run. Do not start a task until its `Needs:` tasks pass.
    helpers already there: `mkcfg`, `big_session`, `sized`, `candidate_from`).
    Test first, watch it fail, then fix.
 3. Do not rename or remove existing functions, config keys or CLI flags.
-   New config fields get defaults so old `codec.yaml` files still load.
+   New config fields get defaults so old `compacter.yaml` files still load.
 4. No new dependencies, no TUI/GUI, no network/LLM calls in unit tests.
-5. Main code: `src/codec/core/autocontrol.py` (config, state machine,
+5. Main code: `src/compacter/core/autocontrol.py` (config, state machine,
    assess, checkpoint, essence, verify, repair, `AutoCompactController`).
-   CLI: `src/codec/cli.py`. Live wrapper: `src/codec/wrapper.py`.
+   CLI: `src/compacter/cli.py`. Live wrapper: `src/compacter/wrapper.py`.
 6. Pressure test trick: `sized(s, cfg, 0.8)` sets the context window so
    pressure ≈ 80%. Use 0.8 for "normal", 0.95 for "emergency" (≥ force 90%;
    emergency never asks the user and ignores postpone — by design).
@@ -253,7 +253,7 @@ same functions instead of its placeholder.
 save `rollback = copy.deepcopy(self.s.messages)` into `self.s.meta["auto_compaction"]["rollback"]`
 as JSON-serializable dicts (use the same serializer as `store`), keeping only the **last** snapshot.
 Add `AutoCompactController.rollback()` that restores it and returns `True/False`; add CLI
-`codec auto-compact rollback`. In `store.save`, write to `session.jsonl.tmp` then
+`compacter auto-compact rollback`. In `store.save`, write to `session.jsonl.tmp` then
 `os.replace` it over the real file.
 
 **Acceptance:**
@@ -267,7 +267,7 @@ Add `AutoCompactController.rollback()` that restores it and returns `True/False`
 
 **Change:**
 - After a postpone, when pressure first reaches `force_at_percent`, interactive sessions show a
-  one-line warning via `ui.info`/stderr: `codec: context is N% full — compaction was postponed`.
+  one-line warning via `ui.info`/stderr: `compacter: context is N% full — compaction was postponed`.
   Do it once (`meta["force_warned"]=True`, cleared on success).
 - Noninteractive: `noninteractive_action="postpone"` must still apply when pressure ≥ force
   and verification passes ("Default to postpone unless pressure is critical").
@@ -277,7 +277,7 @@ Add `AutoCompactController.rollback()` that restores it and returns `True/False`
 
 ## Task 13 — Example config and docs workflows
 
-Create `examples/configs/codec-auto-compaction.yaml` (the YAML block from README, with
+Create `examples/configs/compacter-auto-compaction.yaml` (the YAML block from README, with
 comments) and add to `docs/RECIPES.md` three terminal workflows with real command output
 copied from running the commands on `examples/sessions/original.jsonl`:
 1. Low-risk auto application (`ask_user: never`).
@@ -286,7 +286,7 @@ copied from running the commands on `examples/sessions/original.jsonl`:
 Also document: "65% is an evaluation threshold, not a guaranteed compaction",
 noninteractive defaults, rollback, and a CLI reference table.
 
-**Acceptance:** `python -c "import yaml;yaml.safe_load(open('examples/configs/codec-auto-compaction.yaml'))"`
+**Acceptance:** `python -c "import yaml;yaml.safe_load(open('examples/configs/compacter-auto-compaction.yaml'))"`
 succeeds and `load_config` on a project containing it validates.
 
 ## Task 14 — Regression run (last)
@@ -308,5 +308,5 @@ succeeds and `load_config` on a project containing it validates.
   boundary and low risk is compacted automatically; with pending steps or user-edited files it
   prompts; at ≥ 90% it compacts without prompting if verification passes; unsafe boundary
   → `pending_boundary`; after success it stays quiet until cooldown **and** re-arm.
-- Nothing is replaced when verification fails, and `codec auto-compact rollback` undoes an apply.
+- Nothing is replaced when verification fails, and `compacter auto-compact rollback` undoes an apply.
 - Existing manual commands, configs, adapters and audit entries behave exactly as before.

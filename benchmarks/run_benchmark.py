@@ -2,7 +2,7 @@
 
 Naive compaction (what an agent does by itself): no tags, no policies, no
 pair safety — summarize everything older than `keep_recent`, keep the recent
-window. codec: pins tagged messages, honors drop_always/drop_ok, keeps
+window. compacter: pins tagged messages, honors drop_always/drop_ok, keeps
 tool pairs together, truncates successful tool results, drops them when
 allowed.
 
@@ -21,12 +21,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
-from codec import evals  # noqa: E402
-from codec.config import ScopeRule  # noqa: E402
-from codec.core import compaction, store  # noqa: E402
-from codec.core.models import Message, Policy, Rule, Session  # noqa: E402
-from codec.core.summary import parse_structured_summary  # noqa: E402
-from codec.core.tokens import estimate_tokens, session_tokens  # noqa: E402
+from compacter import evals  # noqa: E402
+from compacter.config import ScopeRule  # noqa: E402
+from compacter.core import compaction, store  # noqa: E402
+from compacter.core.models import Message, Policy, Rule, Session  # noqa: E402
+from compacter.core.summary import parse_structured_summary  # noqa: E402
+from compacter.core.tokens import estimate_tokens, session_tokens  # noqa: E402
 
 FIXTURES = ROOT / "evals" / "fixtures"
 EXAMPLES = ROOT / "examples" / "sessions"
@@ -40,7 +40,7 @@ PYTHON = sys.executable
 def load(path: Path) -> Session:
     tmp = Path(tempfile.mkdtemp())
     try:
-        d = tmp / ".codec"
+        d = tmp / ".compacter"
         d.mkdir()
         shutil.copy(path, d / "session.jsonl")
         return store.load(tmp)
@@ -89,7 +89,7 @@ class JSONStubLLM:
         })
 
 
-def codec_compact(s: Session, keep_recent: int, profile: str = "balanced") -> Session:
+def compacter_compact(s: Session, keep_recent: int, profile: str = "balanced") -> Session:
     p = compaction.plan(s, keep_recent=keep_recent, scopes=TOOL_SCOPE)
     previous = None
     for m in s.messages:
@@ -133,7 +133,7 @@ def measure(fixture: Path, keep_recent: int) -> dict:
     s = load(fixture)
     before = session_tokens(s.visible()) + estimate_tokens(s.system)
     row = {"fixture": fixture.name, "keep_recent": keep_recent, "tokens_before": before}
-    for name, fn in (("naive", naive_compact), ("codec", codec_compact)):
+    for name, fn in (("naive", naive_compact), ("compacter", compacter_compact)):
         view = fn(s, keep_recent)
         row[name] = {
             "tokens_after": session_tokens(view.messages) + estimate_tokens(view.system),
@@ -169,7 +169,7 @@ def msg_user(content, tags=None, policy=None):
 def benchmark_tool_heavy() -> dict:
     s = tool_heavy_session()
     before = session_tokens(s.visible())
-    view = codec_compact(s, keep_recent=3)
+    view = compacter_compact(s, keep_recent=3)
     after = session_tokens(view.messages)
     error_kept = any(m.role == "tool" and "Traceback" in m.content for m in view.messages)
     return {"fixture": "tool-heavy (synthetic)", "tokens_before": before, "tokens_after": after,
@@ -184,7 +184,7 @@ def benchmark_chained() -> dict:
     history: list[dict] = []
     current = s
     for round_ in range(3):
-        view = codec_compact(current, keep_recent=4)
+        view = compacter_compact(current, keep_recent=4)
         summary_json = None
         for m in view.messages:
             if "compaction_summary" in m.tags and m.meta.get("summary_json"):
@@ -207,7 +207,7 @@ def benchmark_profiles() -> list[dict]:
     rows = []
     for profile in ("conservative", "aggressive", "code-heavy"):
         s = load(FIXTURES / "session-a.jsonl")
-        view = codec_compact(s, keep_recent=4, profile=profile)
+        view = compacter_compact(s, keep_recent=4, profile=profile)
         summary_json = ""
         for m in view.messages:
             if "compaction_summary" in m.tags:
@@ -236,11 +236,11 @@ def main() -> None:
     payload = {"fixtures": rows, "tool_heavy": tool_row, "chained": chained, "profiles": profiles}
     (OUT / "benchmark.json").write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
-    lines = ["# Compaction benchmark results", "", "## Fixtures: naive vs codec", ""]
+    lines = ["# Compaction benchmark results", "", "## Fixtures: naive vs compacter", ""]
     lines.append("| fixture | strategy | tokens before -> after | pins preserved | secret leaked | pair splits |")
     lines.append("|---|---|---|---|---|---|")
     for r in rows:
-        for name in ("naive", "codec"):
+        for name in ("naive", "compacter"):
             m = r[name]
             lines.append(f"| {r['fixture']} | {name} | {r['tokens_before']} -> {m['tokens_after']} "
                          f"| {'yes' if m['pins_preserved'] else 'no'} "

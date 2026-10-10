@@ -24,5 +24,5 @@ auto_compaction:
   noninteractive_action: postpone # postpone | apply-if-valid | disable  (no TTY; emergency always applies if valid)
 
   verify_before_apply: true
-  rollback_on_failure: true       # keep a snapshot: `codec auto-compact rollback`
+  rollback_on_failure: true       # keep a snapshot: `compacter auto-compact rollback`
   max_attempts: 2                 # circuit breaker

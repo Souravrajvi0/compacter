@@ -1,4 +1,4 @@
-"""Which agent versions codec has been verified against, and a check for the one you have installed.
+"""Which agent versions compacter has been verified against, and a check for the one you have installed.
 
 The list lives in verified_versions.json (shipped in the wheel). Each entry must have a fixture under
 tests/data/compat/<agent>/<version>.*; tests/test_compat.py enforces that the two stay in sync.

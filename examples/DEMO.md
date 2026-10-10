@@ -36,7 +36,7 @@ Artifacts in `sessions/`:
 ## Eval verdict
 
 ```bash
-codec eval --task "preserve the goal and the no-secrets constraint"
+compacter eval --task "preserve the goal and the no-secrets constraint"
 ```
 
 With the real LLM judge this prints `PASS - goal and constraint survive as

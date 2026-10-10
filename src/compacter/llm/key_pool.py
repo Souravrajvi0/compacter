@@ -1,7 +1,7 @@
 """Round-robin API key pool with per-key cooldown on failure.
 
 Keys are read from the environment, never from files:
-  CODEC_ANTHROPIC_KEYS=k1,k2,k3          (comma separated), or
+  COMPACTER_ANTHROPIC_KEYS=k1,k2,k3          (comma separated), or
   ANTHROPIC_API_KEY, ANTHROPIC_API_KEY_2, ANTHROPIC_API_KEY_3, ...
 """
 from __future__ import annotations
@@ -18,7 +18,7 @@ class AllKeysUnavailable(RuntimeError):
 
 
 def keys_from_env(provider: str = "ANTHROPIC") -> list[str]:
-    multi = os.environ.get(f"CODEC_{provider}_KEYS", "")
+    multi = os.environ.get(f"COMPACTER_{provider}_KEYS", "")
     keys = [k.strip() for k in multi.split(",") if k.strip()]
     if not keys:
         base = f"{provider}_API_KEY"

@@ -2,7 +2,7 @@
 
 Uses a deterministic stub LLM so the committed snapshots are stable.
 With ANTHROPIC_API_KEY set, swap StubLLM for the real provider:
-    from codec.llm import get_llm
+    from compacter.llm import get_llm
     llm = get_llm("anthropic")
 """
 from __future__ import annotations
@@ -16,8 +16,8 @@ HERE = Path(__file__).parent
 ROOT = HERE.parent
 sys.path.insert(0, str(ROOT / "src"))
 
-from codec.core import compaction, store  # noqa: E402
-from codec.core.models import Message, Policy, Session  # noqa: E402
+from compacter.core import compaction, store  # noqa: E402
+from compacter.core.models import Message, Policy, Session  # noqa: E402
 
 
 class StubLLM:
@@ -43,7 +43,7 @@ def build_session() -> Session:
                 policy=Policy.DROP_OK),
         Message("user", "Decision: compaction is preview-then-apply, never silent.",
                 tags={"decision"}),
-        Message("assistant", "Added eval judge: codec eval --task ..."),
+        Message("assistant", "Added eval judge: compacter eval --task ..."),
         Message("user", "Now add an Aider adapter."),
         Message("assistant", "Aider adapter parses #### user / #### assistant blocks."),
         Message("user", "Wrap mode: /compact should be intercepted."),
@@ -63,13 +63,13 @@ def main() -> None:
 
     s = build_session()
     store.save(s, HERE / ".demo")
-    original = (HERE / ".demo" / ".codec" / "session.jsonl").read_text(encoding="utf-8")
+    original = (HERE / ".demo" / ".compacter" / "session.jsonl").read_text(encoding="utf-8")
     (sessions / "original.jsonl").write_text(original, encoding="utf-8")
 
     v1, p1, _ = compact(s, keep_recent=4)
     store.save(v1, HERE / ".demo1")
     (sessions / "compacted-1.jsonl").write_text(
-        (HERE / ".demo1" / ".codec" / "session.jsonl").read_text(encoding="utf-8"),
+        (HERE / ".demo1" / ".compacter" / "session.jsonl").read_text(encoding="utf-8"),
         encoding="utf-8",
     )
 
@@ -78,7 +78,7 @@ def main() -> None:
     v2, p2, _ = compact(v1, keep_recent=3)
     store.save(v2, HERE / ".demo2")
     (sessions / "compacted-2.jsonl").write_text(
-        (HERE / ".demo2" / ".codec" / "session.jsonl").read_text(encoding="utf-8"),
+        (HERE / ".demo2" / ".compacter" / "session.jsonl").read_text(encoding="utf-8"),
         encoding="utf-8",
     )
 

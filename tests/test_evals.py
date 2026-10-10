@@ -1,5 +1,5 @@
-from codec import evals
-from codec.core.models import Message, Policy, Session
+from compacter import evals
+from compacter.core.models import Message, Policy, Session
 
 
 class FakeLLM:

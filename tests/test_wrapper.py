@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from codec import wrapper
-from codec.core import store
-from codec.core.models import Message, Session
+from compacter import wrapper
+from compacter.core import store
+from compacter.core.models import Message, Session
 
 
 def test_is_compact_command():
@@ -25,7 +25,7 @@ def test_wrap_intercepts_compact(tmp_path: Path, monkeypatch, capsys):
     s = Session(agent="generic-api", project=str(tmp_path))
     s.messages = [Message("user", f"m{i}") for i in range(10)]
     store.save(s, tmp_path)
-    monkeypatch.setattr("codec.llm.get_llm", lambda name="auto", **kw: FakeLLM())
+    monkeypatch.setattr("compacter.llm.get_llm", lambda name="auto", **kw: FakeLLM())
 
     echo = [sys.executable, "-u", "-c",
             "import sys\nfor line in sys.stdin:\n    print('echo:', line, end='')\n    sys.stdout.flush()"]
@@ -33,7 +33,7 @@ def test_wrap_intercepts_compact(tmp_path: Path, monkeypatch, capsys):
     rc = wrapper.run(tmp_path, "generic-api", echo, keep_recent=2)
     out = capsys.readouterr().out
     assert "echo: hello" in out
-    assert "[codec] /compact intercepted" in out
+    assert "[compacter] /compact intercepted" in out
     loaded = store.load(tmp_path)
     assert len(loaded.messages) == 3  # summary + 2 recent
     assert (tmp_path / "messages.compacted.json").exists()

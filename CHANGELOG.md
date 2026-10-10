@@ -2,12 +2,12 @@
 
 ## v2.2.0
 
-- Renamed from ctxpipe to **codec** (PyPI package: `codec-cli`; Python module and command: `codec`). The old `ctxpipe` command still works as an alias.
-  Renamed on disk: `.ctxpipe/` -> `.codec/`, `ctxpipe.yaml` -> `codec.yaml`, `~/.ctxpipe` -> `~/.codec`, `CTXPIPE_*` env vars -> `CODEC_*`.
+- Renamed from ctxpipe to **compacter** (PyPI package: `compacter-agent`; Python module and command: `compacter`). The old `ctxpipe` command still works as an alias.
+  Renamed on disk: `.ctxpipe/` -> `.compacter/`, `ctxpipe.yaml` -> `compacter.yaml`, `~/.ctxpipe` -> `~/.compacter`, `CTXPIPE_*` env vars -> `COMPACTER_*`.
 
-- Context packs (`codec pack`, `codec new`), `codec carry`, and `--llm auto` (summarize with the agent CLI you already use)
+- Context packs (`compacter pack`, `compacter new`), `compacter carry`, and `--llm auto` (summarize with the agent CLI you already use)
 - Per-version compatibility tests (`tests/test_compat.py`, fixtures in `tests/data/compat/`)
-- `codec doctor`: compares installed claude/codex/opencode versions with the verified ones
+- `compacter doctor`: compares installed claude/codex/opencode versions with the verified ones
 
 ## v2.1.1 – Auto-compaction hardening
 
@@ -15,7 +15,7 @@ Fixes
 - Cooldown never expired: after one automatic compaction every later assessment was skipped forever
 - `rearm_below_percent` is now enforced (hysteresis; lifted at the recommend threshold so it can never wedge)
 - "Later" (`L`) and `default_action` are honored; empty answer / EOF follows `default_action`
-- `codec wrap --auto-compact=ask` now actually prompts (UI + checkpoint were never passed);
+- `compacter wrap --auto-compact=ask` now actually prompts (UI + checkpoint were never passed);
   non-interactive `apply-if-valid` has a compactor
 - Audit entries no longer contain essence text (directives get a hashed id); `user_action` is the real
   UI verdict (null when nobody was asked); duplicate audit append on chained compactions removed
@@ -26,14 +26,14 @@ Features
 - New verification checks: exact facts, unsupported goals/constraints/decisions, specific completed-task regression
 - Assessment: immediate-retrigger and protected-budget blockers, earlier failures, natural task boundary, recommend-threshold reason
 - Interactive `[R]` review (Summary / Items / structured Diff); `compact --review` uses the same views
-- Rollback snapshot + `codec auto-compact rollback`; atomic transcript writes
+- Rollback snapshot + `compacter auto-compact rollback`; atomic transcript writes
 - One-time warning when pressure hits the force threshold after a postpone
 - `history` of non-applied outcomes (later / disabled / rejected / circuit breaker)
-- `examples/configs/codec-auto-compaction.yaml`, `examples/auto_compaction_demo.py`, docs in `docs/RECIPES.md`
+- `examples/configs/compacter-auto-compaction.yaml`, `examples/auto_compaction_demo.py`, docs in `docs/RECIPES.md`
 
 ## v2.1.0 – Automatic compaction
 
-- Opt-in pressure-based auto-compaction (`auto_compaction:` in `codec.yaml`):
+- Opt-in pressure-based auto-compaction (`auto_compaction:` in `compacter.yaml`):
   evaluate / recommend / force thresholds on effective context pressure
 - Compactability assessment with semantic-risk scoring and safe-boundary detection
 - Verification + one-shot deterministic repair before applying; rollback on failure
@@ -51,11 +51,11 @@ Features
 Step-change in compaction quality:
 
 - `Rule` dataclass + per-message rules (`keep_verbatim_until`, `drop_ok_after`, `summarize_detail`, `truncate_result_to`, `keep_result_sections`, `drop_result_if`)
-- Scoped policies via `codec.yaml` (`file:` / `tag:` / `role:` / `tool_result`) — most-specific wins, strictest breaks ties, per-message rule overrides
+- Scoped policies via `compacter.yaml` (`file:` / `tag:` / `role:` / `tool_result`) — most-specific wins, strictest breaks ties, per-message rule overrides
 - Structured layered summaries `summary_high` / `summary_medium` / `summary_low`; medium/low degrade first under token pressure
 - Chained compactions merge the previous structured summary (no more opaque re-summarization of it)
 - Tool results: truncation, section filtering, `drop_result_if: no_errors`; errors always preserved at higher detail
-- `codec auto-tag` heuristic tagger
+- `compacter auto-tag` heuristic tagger
 - `--profile conservative|aggressive|code-heavy`
 - Structured eval metrics (goals/constraints/decisions retained, errors kept verbatim, token reduction)
 - Ready-to-copy configs in `examples/configs/`, recipes in `docs/RECIPES.md`
@@ -75,6 +75,6 @@ MVP release.
   `--threshold` skips unnecessary compactions
 - Adapters: Claude Code, Codex, Aider, generic JSON — all write new files
   instead of overwriting agent sessions
-- Live wrapper mode: `codec wrap` intercepts `/compact`
+- Live wrapper mode: `compacter wrap` intercepts `/compact`
 - LLM-as-judge evals with canonical tasks in `evals/`
 - Demo repo with chained-compaction snapshots in `examples/`

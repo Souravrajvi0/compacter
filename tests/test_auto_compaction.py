@@ -3,16 +3,16 @@ from pathlib import Path
 
 import pytest
 
-import codec.core.autocontrol as ac
-from codec.config import AutoCompactConfig  # re-exported? no; import from module
-from codec.core.autocontrol import (
+import compacter.core.autocontrol as ac
+from compacter.config import AutoCompactConfig  # re-exported? no; import from module
+from compacter.core.autocontrol import (
     AutoCompactConfig, AutoCompactController, CompactionAssessment, StateMachine,
     TRANSITIONS, add_essence, assess, capture_checkpoint, expire_next_compaction,
     is_safe_boundary, parse_essence_input, pending_essences, repair, transcript_hash,
     verify,
 )
-from codec.core import compaction, store
-from codec.core.models import Message, Policy, Session
+from compacter.core import compaction, store
+from compacter.core.models import Message, Policy, Session
 
 
 def mkcfg(**kw):
@@ -31,7 +31,7 @@ def msg(content, role="user", tags=None, policy=None, **kw):
 
 def sized(s: Session, cfg: AutoCompactConfig, ratio: float) -> AutoCompactConfig:
     """Point cfg.context_window so effective pressure ~= ratio."""
-    from codec.core.tokens import estimate_tokens, session_tokens
+    from compacter.core.tokens import estimate_tokens, session_tokens
 
     cur = session_tokens(s.visible()) + estimate_tokens(s.system)
     cfg.context_window = max(1, int(cur / ratio))

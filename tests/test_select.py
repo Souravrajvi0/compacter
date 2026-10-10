@@ -1,8 +1,8 @@
 import pytest
 
-from codec.core import compaction
-from codec.core.models import Message, Session
-from codec.tui import DOWN, ENTER, SPACE, Picker, parse_ranges, pick_messages
+from compacter.core import compaction
+from compacter.core.models import Message, Session
+from compacter.tui import DOWN, ENTER, SPACE, Picker, parse_ranges, pick_messages
 
 
 def _session(n=10):

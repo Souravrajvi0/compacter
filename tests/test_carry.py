@@ -2,10 +2,10 @@ import json
 
 import pytest
 
-from codec import cli, hook
-from codec.carry import carry
-from codec.core import packs
-from codec.core.models import Message, Session
+from compacter import cli, hook
+from compacter.carry import carry
+from compacter.core import packs
+from compacter.core.models import Message, Session
 
 SUMMARY = json.dumps({
     "summary_high": {"goals": ["carry-goal"], "constraints": [], "decisions": [], "open_tasks": [], "key_files": []},
@@ -28,8 +28,8 @@ def _chat(n=10):
 
 @pytest.fixture(autouse=True)
 def env(tmp_path, monkeypatch):
-    monkeypatch.setenv("CODEC_HOME", str(tmp_path / "home"))
-    monkeypatch.setattr("codec.llm.get_llm", lambda name="auto", **kw: StubLLM())
+    monkeypatch.setenv("COMPACTER_HOME", str(tmp_path / "home"))
+    monkeypatch.setattr("compacter.llm.get_llm", lambda name="auto", **kw: StubLLM())
 
 
 def test_verbatim_carry_keeps_only_chosen(tmp_path):
@@ -94,7 +94,7 @@ def test_unstructured_summary_is_flagged(tmp_path, monkeypatch):
         def complete(self, system, user, max_tokens=2048):
             return "just some prose, not JSON"
 
-    monkeypatch.setattr("codec.llm.get_llm", lambda name="auto", **kw: Prose())
+    monkeypatch.setattr("compacter.llm.get_llm", lambda name="auto", **kw: Prose())
     s = _chat()
     bad = carry(s, {s.messages[0].id}, tmp_path, name="bad")
     assert bad.structured is False

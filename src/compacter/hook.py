@@ -236,7 +236,7 @@ def respond(prompt: str, project: Path, agent: str, keep_recent: int = 6, llm_na
 
 def run(agent: str, keep_recent: int = 6, llm_name: str = "auto") -> int:
     """Hook entry point: JSON on stdin, JSON decision on stdout."""
-    if os.environ.get("CODEC_NESTED"):  # our own summarizer subprocess: never recurse
+    if os.environ.get("COMPACTER_NESTED"):  # our own summarizer subprocess: never recurse
         return 0
     try:
         payload = json.load(sys.stdin)
@@ -249,7 +249,7 @@ def run(agent: str, keep_recent: int = 6, llm_name: str = "auto") -> int:
     try:
         text = respond(prompt, project, agent, keep_recent, llm_name)
     except Exception as e:  # never let a hook crash the agent
-        text = f"codec error: {e}"
+        text = f"compacter error: {e}"
     if isinstance(text, Inject):
         sys.stdout.write(json.dumps({"hookSpecificOutput": {
             "hookEventName": "UserPromptSubmit", "additionalContext": str(text)}}))

@@ -1,7 +1,7 @@
 # Recipes
 
-Copy-pasteable `codec.yaml` patterns and commands for common situations.
-Config file location: `<project>/codec.yaml`. See `examples/configs/` for full files.
+Copy-pasteable `compacter.yaml` patterns and commands for common situations.
+Config file location: `<project>/compacter.yaml`. See `examples/configs/` for full files.
 
 ## 1. Drop all successful tool logs, keep errors verbatim
 
@@ -17,7 +17,7 @@ scopes:
 ```
 
 ```bash
-codec compact --preview --profile aggressive
+compacter compact --preview --profile aggressive
 ```
 
 Expected effect: ~90% of successful result tokens gone; every error result survives in `summary_medium` or verbatim.
@@ -35,8 +35,8 @@ scopes:
 ```
 
 ```bash
-codec auto-tag --apply   # suggests goal/constraint tags first
-codec compact --apply
+compacter auto-tag --apply   # suggests goal/constraint tags first
+compacter compact --apply
 ```
 
 Expected effect: `summary_high` always lists goals/constraints; older user messages become summaries.
@@ -51,8 +51,8 @@ auto_tagging:
 ```
 
 ```bash
-codec auto-tag          # dry-run: prints suggestions with reasons
-codec auto-tag --apply  # writes the tags
+compacter auto-tag          # dry-run: prints suggestions with reasons
+compacter auto-tag --apply  # writes the tags
 ```
 
 Expected effect: tags appear; policies unchanged, so nothing becomes non-degradable.
@@ -70,8 +70,8 @@ scopes:
 ```
 
 ```bash
-cp examples/configs/codec-code-heavy.yaml ./codec.yaml
-codec compact --apply --profile code-heavy
+cp examples/configs/compacter-code-heavy.yaml ./compacter.yaml
+compacter compact --apply --profile code-heavy
 ```
 
 Expected effect: failing test output and file paths survive in `summary_high`; exploratory chatter folds into `summary_low` or is dropped at budget.
@@ -87,18 +87,18 @@ scopes:
 ```
 
 ```bash
-codec compact --apply --profile conservative   # run weekly / per session
+compacter compact --apply --profile conservative   # run weekly / per session
 ```
 
 Expected effect: each compaction merges the previous structured summary — goals/decisions accumulate in `summary_high` instead of drifting.
 
 ## Automatic compaction
 
-Full config: `examples/configs/codec-auto-compaction.yaml`. Everything below is
+Full config: `examples/configs/compacter-auto-compaction.yaml`. Everything below is
 reproducible offline with `python examples/auto_compaction_demo.py` (deterministic stub LLM).
 
 **65% is an evaluation threshold, not a guaranteed compaction event.** Crossing it only
-makes the session *eligible*: codec still skips when the projected reduction is poor, when
+makes the session *eligible*: compacter still skips when the projected reduction is poor, when
 a tool pair or risky phase (migration/rebase/commit/deploy) is open, during cooldown, or when
 the candidate would immediately retrigger. After a successful compaction it stays quiet until
 pressure drops below `rearm_below_percent` (or reaches the recommend threshold).
@@ -112,7 +112,7 @@ pressure drops below `rearm_below_percent` (or reaches the recommend threshold).
 -> tokens 778 -> 186; checkpoint kept; rollback available: True
 
 === 2. Essence prompt (ask_user: always; ask_user: smart asks the same when risk is medium or higher) ===
-codec: context is 80% full.
+compacter: context is 80% full.
 
 Compaction recommendation:
   Current context:     778 tokens
@@ -163,9 +163,9 @@ Essence recorded: "keep the exact adapter names and the rejected regex parser". 
 
 - No TTY (CI, pipes): never blocks. `noninteractive_action: postpone` (default), `apply-if-valid`, or `disable`.
   Emergency pressure always applies if valid.
-- `codec wrap --auto-compact` (use config), `=ask`, `=apply`, `=off`. `ask`/`apply` enable the feature for that run.
+- `compacter wrap --auto-compact` (use config), `=ask`, `=apply`, `=off`. `ask`/`apply` enable the feature for that run.
 - A candidate that fails verification is repaired once, then rejected; the original session is untouched.
-- Before every automatic apply a snapshot is kept: `codec auto-compact rollback` restores the master
+- Before every automatic apply a snapshot is kept: `compacter auto-compact rollback` restores the master
   transcript (the agent's own session file is never overwritten, so there is nothing to undo there).
 - Master transcript writes are atomic (temp file + rename).
 
@@ -173,14 +173,14 @@ Essence recorded: "keep the exact adapter names and the rejected regex parser". 
 
 | Command | What it does |
 |---|---|
-| `codec auto-compact status` | state, pressure, thresholds, cooldown, armed, rollback availability |
-| `codec auto-compact enable` / `disable` | toggle `auto_compaction.enabled` in `codec.yaml` |
-| `codec auto-compact assess` | print the compactability assessment as JSON |
-| `codec auto-compact reset-cooldown` | clear cooldown / postpone / failure counters |
-| `codec auto-compact rollback` | restore the transcript from before the last automatic compaction |
-| `codec compact --auto` | one automatic evaluation (prompts when a TTY is attached) |
-| `codec compact --apply-if-valid` | automatic, never asks, applies only when verified |
-| `codec compact --checkpoint` | print the continuity checkpoint JSON |
-| `codec compact --verify` | check transcript integrity and pending essences |
-| `codec compact --review summary\|items\|diff` | inspect the plan (`diff` calls the LLM for a candidate) |
-| `codec wrap --auto-compact[=ask\|apply\|off]` | live wrapper integration |
+| `compacter auto-compact status` | state, pressure, thresholds, cooldown, armed, rollback availability |
+| `compacter auto-compact enable` / `disable` | toggle `auto_compaction.enabled` in `compacter.yaml` |
+| `compacter auto-compact assess` | print the compactability assessment as JSON |
+| `compacter auto-compact reset-cooldown` | clear cooldown / postpone / failure counters |
+| `compacter auto-compact rollback` | restore the transcript from before the last automatic compaction |
+| `compacter compact --auto` | one automatic evaluation (prompts when a TTY is attached) |
+| `compacter compact --apply-if-valid` | automatic, never asks, applies only when verified |
+| `compacter compact --checkpoint` | print the continuity checkpoint JSON |
+| `compacter compact --verify` | check transcript integrity and pending essences |
+| `compacter compact --review summary\|items\|diff` | inspect the plan (`diff` calls the LLM for a candidate) |
+| `compacter wrap --auto-compact[=ask\|apply\|off]` | live wrapper integration |
