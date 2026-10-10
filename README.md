@@ -2,7 +2,8 @@
 
 **Context control for CLI coding agents. You decide what the agent remembers.**
 
-> Status: v2.1.1. 116 tests. Adapters: Claude Code, Codex, Aider, opencode, generic JSON.
+> Status: v2.2.0. 170 tests. Adapters: Claude Code, Codex, opencode, Aider, generic JSON.
+> Verified against Claude Code 2.1.296, Codex 0.144.6 and opencode 1.18.35 (`compacter doctor`).
 
 ## The problem
 
@@ -28,7 +29,12 @@ the summary before the agent ever sees it.
 - Real token counts (tiktoken) with graceful fallback
 - Prompt profiles: `--profile conservative|aggressive|code-heavy`
 - `compacter auto-tag`: conservative heuristic tag suggestions (writes only with `--apply`)
-- Adapters for Claude Code, Codex, Aider, and plain JSON
+- Adapters for Claude Code, Codex, opencode, Aider, and plain JSON
+- Tick-box message picker (`compact --select`, `--only 0,3-5`) and `/compacter` slash commands inside Claude Code and Codex
+- `compacter carry`: pick messages from a chat and carry only those into a new chat (summarized or word for word)
+- Context packs: save a compaction and start any future chat, in any project or agent, from it
+- No API key needed: summaries come from the agent CLI you already use (`--llm auto`)
+- `compacter doctor`: compares your installed agent versions with the ones this release was tested against
 - Live wrapper: `compacter wrap` intercepts `/compact` inside the agent
 - Automatic compaction (opt-in): pressure-based triggers, risk assessment, verification, circuit breakers — see below
 - LLM-as-judge evals: `compacter eval --task ...` checks the compacted view still supports the task
@@ -37,12 +43,16 @@ the summary before the agent ever sees it.
 ## Getting started
 
 ```bash
-pip install compacter-agent          # from PyPI (installs the `compacter` command)
+npm install -g compacter          # launcher; sets up its own private Python environment (needs Python 3.10+)
+pip install compacter-agent       # from PyPI once published (installs the `compacter` command)
 pip install .                     # or from a clone of this repo
 pip install ".[dev,anthropic]"    # with tests + Anthropic summarizer
 # No API key needed: summaries are written by the agent you already use (claude / codex / opencode).
 # Optional: export ANTHROPIC_API_KEY=... and pass --llm anthropic to use the API instead.
 ```
+
+The old command name `ctxpipe` still works as an alias. On Windows, if `compacter` is not found after `pip install`,
+add Python's `Scripts` folder to PATH or run `python -m compacter`.
 
 ## Quickstart
 
@@ -295,16 +305,24 @@ Principles:
 ## Repo layout
 
 ```
-src/compacter/core/       models, store, compaction, autocontrol, tokens, prompts
-src/compacter/adapters/   base + registry, claude_code, codex, aider, opencode, generic_api
-src/compacter/llm/        summarizer providers (Anthropic, key pool)
+src/compacter/core/       models, store, compaction, scopes, summary, autocontrol, autotag, packs, tokens, prompts
+src/compacter/adapters/   base + registry, claude_code, codex, opencode, aider, generic_api
+src/compacter/llm/        summarizers: agent CLIs (cli_llm), Anthropic API, key pool
+src/compacter/integrations/  opencode TUI plugin
 src/compacter/cli.py      argparse front end
+src/compacter/hook.py     /compacter slash-command handler for Claude Code and Codex
+src/compacter/tui.py      tick-box message picker
+src/compacter/carry.py    carry chosen messages into a new chat
+src/compacter/compat.py   verified agent versions + `compacter doctor`
 src/compacter/wrapper.py  live wrapper mode
 src/compacter/evals.py    LLM-as-judge evals
+npm/                   npm launcher package (`compacter`)
+.github/workflows/     CI (Linux/Windows/macOS) and release
 examples/              demo repo: before/after compaction snapshots
 evals/                 canonical eval tasks + results
 benchmarks/            naive-vs-compacter compaction benchmark
-tests/                 engine, store, adapter, wrapper, eval tests
+tests/                 engine, store, adapters, hook, wrapper, packs, carry, evals, per-version compat
+tests/data/compat/     one fixture per verified agent version
 docs/ROADMAP.md        done/next
 docs/BENCHMARKS.md     benchmark write-up
 ```
@@ -320,10 +338,13 @@ To add an adapter, see CONTRIBUTING.md.
 
 ## Status
 
-- v2.0.0: rules engine, scoped policies, structured layered summaries, auto-tag, profiles, eval metrics
-- Adapters: Claude Code, Codex, Aider, opencode, generic JSON
-- 44 tests passing
-- Next bets: delta compaction (`--mode delta`), more adapters, TUI
+- v2.2.0: context packs, `carry`/`new`, agent-CLI summarizer (no API key), per-version compatibility tests, `doctor`
+- v2.1.x: opt-in automatic compaction with verification, checkpoints and rollback
+- v2.0: rules engine, scoped policies, structured layered summaries, auto-tag, profiles, eval metrics
+- Adapters: Claude Code, Codex, opencode, Aider, generic JSON
+- 170 tests passing
+- Verified end to end on real Claude Code: compact a 418-message chat (about 59k to about 2k tokens) and resume it
+- Not yet verified in real use: the Codex hook, the opencode plugin, and editing code from a compacted chat
 
 ## License
 
