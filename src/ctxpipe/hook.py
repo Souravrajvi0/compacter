@@ -96,7 +96,6 @@ CARRY_USAGE = ("Carry chosen messages into a new chat:\n"
 
 def _carry(args: list[str], project: Path, agent: str, llm_name: str) -> str:
     from .carry import carry
-    from .core.models import Session  # noqa: F401
 
     adapter = get_adapter(agent)
     ranges, verbatim, new_chat, name = None, False, False, None

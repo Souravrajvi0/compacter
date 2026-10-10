@@ -14,6 +14,8 @@
 
 12. [x] v2.1.1: auto-compaction hardening (cooldown/rearm/later fixes, wrapper prompt, checkpoint, verification, review, rollback)
 
+13. [x] Context packs, `carry`/`new`, agent-CLI summarizer, per-version compatibility tests + `ctxpipe doctor`
+
 ## Next
 - [ ] Benchmark auto-compaction trigger quality on real long sessions
 - [ ] Per-adapter checkpoint extraction (structured tool metadata instead of text heuristics)

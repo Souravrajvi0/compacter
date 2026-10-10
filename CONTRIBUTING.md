@@ -27,6 +27,13 @@ pytest
 5. Add a fixture under `tests/data/` and an integration test next to the
    existing ones in `tests/test_adapters_integration.py`.
 
+## Agent version compatibility
+
+`tests/data/compat/<agent>/<version>.*` holds one fixture per agent release we have verified.
+`pytest tests/test_compat.py` reads each one, checks tool pairs, and does a write -> read round trip.
+`ctxpipe doctor` compares the agents installed on your machine with those versions. When an agent
+ships a new release: run `ctxpipe doctor`, and if it says "newer", capture a fresh fixture and add it.
+
 ## Conventions
 
 - No comments unless the intent is non-obvious.

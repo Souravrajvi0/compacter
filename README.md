@@ -246,6 +246,12 @@ A seeded chat keeps the structured summary, so compacting it later merges the pa
 next summary instead of losing it. Resume with `claude --resume <id>`, `codex resume --last`,
 or `opencode --session <id>`.
 
+## Agent compatibility
+
+ctxpipe reads each agent's own session files, which can change between releases. Verified versions
+(each has a fixture in `tests/data/compat/`): Claude Code 2.1.296, Codex 0.144.6, opencode 1.18.35.
+Run `ctxpipe doctor` to compare your installed versions with these.
+
 ## Why this exists
 
 CLI coding agents fill their context window and then compact it themselves —

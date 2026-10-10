@@ -625,6 +625,16 @@ def cmd_carry(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_doctor(args: argparse.Namespace) -> int:
+    """Compare installed agent versions with the versions ctxpipe has been verified against."""
+    from . import compat
+
+    reports = compat.check_all()
+    for r in reports:
+        print(r.line())
+    return 1 if any(r.status in ("newer", "older") for r in reports) else 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(prog="ctxpipe", description=__doc__)
     ap.add_argument("--version", action="version", version=__version__)
@@ -706,6 +716,9 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--uninstall", action="store_true")
     sp.add_argument("--config-dir", default=None, help="opencode config dir (default ~/.config/opencode)")
     sp.set_defaults(fn=cmd_install_opencode)
+
+    sp = sub.add_parser("doctor", help="check installed agent versions against the verified ones")
+    sp.set_defaults(fn=cmd_doctor)
 
     sp = sub.add_parser("pack", help="save/list/show/delete context packs (reusable compactions)")
     sp.add_argument("action", choices=["save", "list", "show", "delete"])

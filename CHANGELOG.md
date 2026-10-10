@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Context packs (`ctxpipe pack`, `ctxpipe new`), `ctxpipe carry`, and `--llm auto` (summarize with the agent CLI you already use)
+- Per-version compatibility tests (`tests/test_compat.py`, fixtures in `tests/data/compat/`)
+- `ctxpipe doctor`: compares installed claude/codex/opencode versions with the verified ones
+
 ## v2.1.1 – Auto-compaction hardening
 
 Fixes
