@@ -1,11 +1,11 @@
-// ctxpipe /compacter — opencode TUI plugin.
+// codec /compacter — opencode TUI plugin.
 // Adds a `/compacter` slash command: tick the messages to compact (✓ on the right),
 // confirm, and the current session is replaced by a compacted one. Same terminal.
-// Shells out to the `ctxpipe` CLI (set CTXPIPE_BIN to override); keep-recent via CTXPIPE_KEEP_RECENT.
+// Shells out to the `codec` CLI (set CODEC_BIN to override); keep-recent via CODEC_KEEP_RECENT.
 import { spawn } from "node:child_process"
 
-const KEEP_RECENT = Number(process.env.CTXPIPE_KEEP_RECENT || 6)
-const CMD = process.env.CTXPIPE_BIN ? [process.env.CTXPIPE_BIN] : ["ctxpipe"] // CTXPIPE_CMD (installer rewrites this)
+const KEEP_RECENT = Number(process.env.CODEC_KEEP_RECENT || 6)
+const CMD = process.env.CODEC_BIN ? [process.env.CODEC_BIN] : ["codec"] // CODEC_CMD (installer rewrites this)
 
 function run(args, { input, env } = {}) {
   return new Promise((resolve) => {
@@ -77,10 +77,10 @@ async function compact(api, ids) {
   const sessionID = route.name === "session" ? route.params.sessionID : undefined
   api.ui.dialog.clear()
   api.ui.toast({ variant: "info", message: `Compacting ${ids.length} messages…`, duration: 120000 })
-  const env = sessionID ? { CTXPIPE_OPENCODE_SESSION: sessionID } : {}
+  const env = sessionID ? { CODEC_OPENCODE_SESSION: sessionID } : {}
   let r = await run(["--project", dir, "start", "--agent", "opencode"], { env })
   if (r.code === 0) r = await run(["--project", dir, "compact", "--apply", "--keep-recent", String(KEEP_RECENT), "--only-ids", "-"], { input: ids.join("\n"), env })
-  const newID = /CTXPIPE_NEW_SESSION=(\S+)/.exec(r.out)?.[1]
+  const newID = /CODEC_NEW_SESSION=(\S+)/.exec(r.out)?.[1]
   if (r.code !== 0 || !newID) {
     api.ui.toast({ variant: "error", title: "Compacter failed", message: r.out.trim().split("\n").slice(-3).join(" | ").slice(0, 300), duration: 15000 })
     return
@@ -90,12 +90,12 @@ async function compact(api, ids) {
 }
 
 export default {
-  id: "ctxpipe-compacter",
+  id: "codec-compacter",
   tui: async (api) => {
     api.command.register(() => [
       {
         title: "Compacter: choose messages to compact",
-        value: "ctxpipe.compacter",
+        value: "codec.compacter",
         description: "Tick the messages to fold into a summary; the rest stay verbatim",
         category: "Compacter",
         slash: { name: "compacter", aliases: ["compact-pick"] },

@@ -1,7 +1,7 @@
 """Context packs: a saved compaction you can carry into any new chat.
 
 A pack holds the latest compaction summary plus the messages you pinned (goal / constraint /
-keep_verbatim). It lives in ~/.ctxpipe/packs (override with CTXPIPE_HOME), so it is usable from any
+keep_verbatim). It lives in ~/.codec/packs (override with CODEC_HOME), so it is usable from any
 project and any agent. Seeding a chat writes the pack as the first message of a brand-new session.
 """
 from __future__ import annotations
@@ -23,7 +23,7 @@ ACK = "Understood. I have the context carried over from the earlier work and wil
 
 
 def pack_dir() -> Path:
-    return Path(os.environ.get("CTXPIPE_HOME") or Path.home() / ".ctxpipe") / "packs"
+    return Path(os.environ.get("CODEC_HOME") or Path.home() / ".codec") / "packs"
 
 
 def _path(name: str) -> Path:
@@ -41,7 +41,7 @@ def save_pack(name: str, session: Session, note: str = "") -> Path:
     """Save the session's latest compaction summary + pinned messages as a pack."""
     summary = _latest_summary(session)
     if summary is None:
-        raise ValueError("this session has no compaction yet; run `ctxpipe compact --apply` first")
+        raise ValueError("this session has no compaction yet; run `codec compact --apply` first")
     pinned = [
         {"role": m.role, "content": m.content, "tags": sorted(m.tags)}
         for m in session.messages
@@ -88,7 +88,7 @@ def _write(name: str, pack: dict[str, Any]) -> Path:
 def load_pack(name: str) -> dict[str, Any]:
     path = _path(name)
     if not path.exists():
-        raise FileNotFoundError(f"no pack named {name!r} (see `ctxpipe pack list`)")
+        raise FileNotFoundError(f"no pack named {name!r} (see `codec pack list`)")
     return json.loads(path.read_text(encoding="utf-8"))
 
 
@@ -117,7 +117,7 @@ def render_markdown(pack: dict[str, Any]) -> str:
     """The pack as one block of text: summary first, then the pinned messages."""
     data = parse_structured_summary(pack["summary_json"]) if pack.get("summary_json") else None
     summary = format_summary_block(data, 4000) if data else pack.get("summary_text", "")
-    parts = [f"[ctxpipe context pack '{pack['name']}': carried over from an earlier chat]", summary]
+    parts = [f"[codec context pack '{pack['name']}': carried over from an earlier chat]", summary]
     if pack.get("pinned"):
         parts.append("## Messages carried over from the earlier chat (verbatim)")
         parts += [f"- ({p['role']}) {p['content']}" for p in pack["pinned"]]

@@ -41,7 +41,7 @@ with a smaller context. Write ONE plain-markdown summary with these sections: \
 {target_tokens} tokens. No preamble.
 """
 
-SUMMARY_HEADER = "[ctxpipe compaction summary of earlier conversation]\n"
+SUMMARY_HEADER = "[codec compaction summary of earlier conversation]\n"
 
 
 def _schema_example() -> str:

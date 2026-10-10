@@ -19,8 +19,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
-from ctxpipe import evals  # noqa: E402
-from ctxpipe.core import compaction, store  # noqa: E402
+from codec import evals  # noqa: E402
+from codec.core import compaction, store  # noqa: E402
 
 FIXTURES = ROOT / "evals" / "fixtures"
 RESULTS = ROOT / "evals" / "results"
@@ -40,7 +40,7 @@ class StubLLM:
 
 def _load_session_from(path: Path):
     tmp = Path(tempfile.mkdtemp())
-    target = tmp / ".ctxpipe"
+    target = tmp / ".codec"
     target.mkdir()
     shutil.copy(path, target / "session.jsonl")
     try:
@@ -61,7 +61,7 @@ def main() -> int:
         import os
 
         if os.environ.get("ANTHROPIC_API_KEY"):
-            from ctxpipe.llm import get_llm
+            from codec.llm import get_llm
 
             llm = get_llm("anthropic")
             provider = "anthropic"

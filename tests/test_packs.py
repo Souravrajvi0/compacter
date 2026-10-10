@@ -2,10 +2,10 @@ import json
 
 import pytest
 
-from ctxpipe.adapters import get_adapter
-from ctxpipe.core import compaction, packs, store
-from ctxpipe.core.models import Message, Session
-from ctxpipe.core.summary import parse_structured_summary
+from codec.adapters import get_adapter
+from codec.core import compaction, packs, store
+from codec.core.models import Message, Session
+from codec.core.summary import parse_structured_summary
 
 SUMMARY = json.dumps({
     "summary_high": {"goals": ["ship the login fix"], "constraints": ["no new deps"],
@@ -22,7 +22,7 @@ class StubLLM:
 
 @pytest.fixture(autouse=True)
 def home(tmp_path, monkeypatch):
-    monkeypatch.setenv("CTXPIPE_HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("CODEC_HOME", str(tmp_path / "home"))
 
 
 def _compacted() -> Session:
@@ -79,7 +79,7 @@ def test_seeded_chat_chains_into_next_compaction(tmp_path):
 
 
 def test_cli_pack_and_new(tmp_path, capsys, monkeypatch):
-    from ctxpipe import cli
+    from codec import cli
 
     proj = tmp_path / "proj"
     proj.mkdir()

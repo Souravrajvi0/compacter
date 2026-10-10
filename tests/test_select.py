@@ -1,8 +1,8 @@
 import pytest
 
-from ctxpipe.core import compaction
-from ctxpipe.core.models import Message, Session
-from ctxpipe.tui import DOWN, ENTER, SPACE, Picker, parse_ranges, pick_messages
+from codec.core import compaction
+from codec.core.models import Message, Session
+from codec.tui import DOWN, ENTER, SPACE, Picker, parse_ranges, pick_messages
 
 
 def _session(n=10):

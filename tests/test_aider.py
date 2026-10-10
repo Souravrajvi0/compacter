@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from ctxpipe.adapters import get_adapter
-from ctxpipe.core.models import Message, Session
+from codec.adapters import get_adapter
+from codec.core.models import Message, Session
 
 SAMPLE = """# aider chat started at 2026-10-06 10:00:00
 

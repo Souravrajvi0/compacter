@@ -66,7 +66,7 @@ class OpencodeAdapter(Adapter):
         return sqlite3.connect(str(DB_FILE))
 
     def latest_session_id(self, project: Path) -> str:
-        if explicit := os.environ.get("CTXPIPE_OPENCODE_SESSION"):
+        if explicit := os.environ.get("CODEC_OPENCODE_SESSION"):
             return explicit
         want = _norm_dir(str(project.resolve()))
         with self._db() as c:
@@ -155,8 +155,8 @@ class OpencodeAdapter(Adapter):
                 " tokens_input, tokens_output, tokens_reasoning, tokens_cache_read,"
                 " tokens_cache_write, time_created, time_updated)"
                 " values (?,?,?,?,?,?,0,0,0,0,0,0,?,?)",
-                (sid, proj[0] if proj else "", f"ctxpipe-{sid[-6:]}", session.project,
-                 f"ctxpipe compacted {datetime.now(timezone.utc).isoformat(timespec='seconds')}",
+                (sid, proj[0] if proj else "", f"codec-{sid[-6:]}", session.project,
+                 f"codec compacted {datetime.now(timezone.utc).isoformat(timespec='seconds')}",
                  "1", now_ms, now_ms))
             parent: str | None = None
             for m in session.messages:

@@ -1,4 +1,4 @@
-"""On-disk master transcript: <project>/.ctxpipe/session.jsonl.
+"""On-disk master transcript: <project>/.codec/session.jsonl.
 
 Line 1 is the session header, every following line is one message.
 """
@@ -10,7 +10,7 @@ from pathlib import Path
 
 from .models import Message, Session
 
-STORE_DIR = ".ctxpipe"
+STORE_DIR = ".codec"
 STORE_FILE = "session.jsonl"
 
 
@@ -31,7 +31,7 @@ def save(session: Session, project: Path) -> Path:
 def load(project: Path) -> Session:
     path = store_path(project)
     if not path.exists():
-        raise FileNotFoundError(f"no ctxpipe session in {project} (run `ctxpipe start` first)")
+        raise FileNotFoundError(f"no codec session in {project} (run `codec start` first)")
     rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
     h = rows[0]
     return Session(

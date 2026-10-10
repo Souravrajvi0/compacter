@@ -9,20 +9,20 @@ pytest
 
 ## Layout
 
-- `src/ctxpipe/core/` — agent-agnostic engine: models, store, compaction, tokens
-- `src/ctxpipe/adapters/` — one module per agent
-- `src/ctxpipe/llm/` — LLM providers
-- `src/ctxpipe/cli.py` — argparse front end
-- `src/ctxpipe/wrapper.py`, `src/ctxpipe/evals.py`
+- `src/codec/core/` — agent-agnostic engine: models, store, compaction, tokens
+- `src/codec/adapters/` — one module per agent
+- `src/codec/llm/` — LLM providers
+- `src/codec/cli.py` — argparse front end
+- `src/codec/wrapper.py`, `src/codec/evals.py`
 - `tests/` — pytest; integration fixtures live in `tests/data/`
 - `evals/`, `examples/` — runnable methodology + demo
 
 ## Adding an adapter
 
-1. Subclass `ctxpipe.adapters.base.Adapter`.
+1. Subclass `codec.adapters.base.Adapter`.
 2. Implement `read(project) -> Session` and `write(session, project) -> Path`.
    `write` must not overwrite the agent's own session file.
-3. Decorate with `@register` and import the module in `ctxpipe/adapters/__init__.py`.
+3. Decorate with `@register` and import the module in `codec/adapters/__init__.py`.
 4. Record tool pairing: put matching ids in `Message.meta["pair_ids"]`.
 5. Add a fixture under `tests/data/` and an integration test next to the
    existing ones in `tests/test_adapters_integration.py`.
@@ -31,8 +31,8 @@ pytest
 
 `tests/data/compat/<agent>/<version>.*` holds one fixture per agent release we have verified.
 `pytest tests/test_compat.py` reads each one, checks tool pairs, and does a write -> read round trip.
-`ctxpipe doctor` compares the agents installed on your machine with those versions. When an agent
-ships a new release: run `ctxpipe doctor`, and if it says "newer", capture a fresh fixture and add it.
+`codec doctor` compares the agents installed on your machine with those versions. When an agent
+ships a new release: run `codec doctor`, and if it says "newer", capture a fresh fixture and add it.
 
 ## Conventions
 

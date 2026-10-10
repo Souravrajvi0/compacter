@@ -1,9 +1,9 @@
 """Integration tests: each adapter reads a real-format session fixture."""
 from pathlib import Path
 
-import ctxpipe.adapters.claude_code as claude_code
-import ctxpipe.adapters.codex as codex
-from ctxpipe.adapters import claude_code as cc_mod, get_adapter
+import codec.adapters.claude_code as claude_code
+import codec.adapters.codex as codex
+from codec.adapters import claude_code as cc_mod, get_adapter
 
 DATA = Path(__file__).parent / "data"
 

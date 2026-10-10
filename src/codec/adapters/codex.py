@@ -93,7 +93,7 @@ class CodexAdapter(Adapter):
         lines = [json.dumps({
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "type": "session_meta",
-            "payload": {"session_id": sid, "id": sid, "cwd": session.project, "originator": "ctxpipe"},
+            "payload": {"session_id": sid, "id": sid, "cwd": session.project, "originator": "codec"},
         })]
         for m in session.messages:
             if m.role == "tool":

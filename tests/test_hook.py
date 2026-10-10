@@ -4,9 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from ctxpipe import hook
-from ctxpipe.core import store
-from ctxpipe.core.models import Message, Session
+from codec import hook
+from codec.core import store
+from codec.core.models import Message, Session
 
 
 class FakeAdapter:
@@ -32,7 +32,7 @@ class StubLLM:
 def env(tmp_path, monkeypatch):
     fa = FakeAdapter()
     monkeypatch.setattr(hook, "get_adapter", lambda name: fa)
-    monkeypatch.setattr("ctxpipe.llm.get_llm", lambda name="auto", **kw: StubLLM())
+    monkeypatch.setattr("codec.llm.get_llm", lambda name="auto", **kw: StubLLM())
     return tmp_path, fa
 
 
@@ -78,10 +78,10 @@ def test_run_emits_block_decision(env, monkeypatch, capsys):
 
 
 def test_pack_roundtrip_via_hook(env, monkeypatch, tmp_path):
-    from ctxpipe.core import compaction, packs
-    from ctxpipe.core.models import Message, Session
+    from codec.core import compaction, packs
+    from codec.core.models import Message, Session
 
-    monkeypatch.setenv("CTXPIPE_HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("CODEC_HOME", str(tmp_path / "home"))
     project, fa = env
     s = Session(agent="claude-code", project=str(project), messages=[
         Message(role="user", content=f"m{i}") for i in range(8)])
@@ -98,9 +98,9 @@ def test_pack_roundtrip_via_hook(env, monkeypatch, tmp_path):
 
 
 def test_run_injects_context_for_pack_load(env, monkeypatch, capsys, tmp_path):
-    from ctxpipe.core import packs
+    from codec.core import packs
 
-    monkeypatch.setenv("CTXPIPE_HOME", str(tmp_path / "home"))
+    monkeypatch.setenv("CODEC_HOME", str(tmp_path / "home"))
     (packs.pack_dir()).mkdir(parents=True)
     (packs.pack_dir() / "demo.json").write_text(json.dumps(
         {"name": "demo", "summary_text": "CODEWORD-1", "summary_json": None, "pinned": []}), encoding="utf-8")

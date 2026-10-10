@@ -1,9 +1,9 @@
 """Edge-case hardening tests."""
 from pathlib import Path
 
-import ctxpipe.adapters.aider as aider
-from ctxpipe.core import compaction, store, tokens
-from ctxpipe.core.models import Message, Policy, Session
+import codec.adapters.aider as aider
+from codec.core import compaction, store, tokens
+from codec.core.models import Message, Policy, Session
 
 
 def test_compaction_all_keep_verbatim():
@@ -27,7 +27,7 @@ def test_compaction_empty_session():
 
 
 def test_double_compaction_audit_trail(tmp_path: Path, monkeypatch):
-    import ctxpipe.cli as cli
+    import codec.cli as cli
 
     class FakeAdapter:
         name = "generic-api"
@@ -43,7 +43,7 @@ def test_double_compaction_audit_trail(tmp_path: Path, monkeypatch):
     s.messages = [Message("user", f"msg {i}") for i in range(8)]
     store.save(s, tmp_path)
     monkeypatch.setattr(cli, "get_adapter", lambda name: FakeAdapter())
-    monkeypatch.setattr("ctxpipe.llm.get_llm", lambda p="auto", **kw: FakeLLM())
+    monkeypatch.setattr("codec.llm.get_llm", lambda p="auto", **kw: FakeLLM())
 
     assert cli.main(["--project", str(tmp_path), "compact", "--apply", "--keep-recent", "3"]) == 0
     loaded = store.load(tmp_path)

@@ -8,11 +8,11 @@ from pathlib import Path
 
 import pytest
 
-import ctxpipe.adapters.claude_code as claude_code
-import ctxpipe.adapters.codex as codex
-import ctxpipe.adapters.opencode as opencode
-from ctxpipe import compat
-from ctxpipe.adapters import get_adapter
+import codec.adapters.claude_code as claude_code
+import codec.adapters.codex as codex
+import codec.adapters.opencode as opencode
+from codec import compat
+from codec.adapters import get_adapter
 
 ROOT = compat.FIXTURES
 
@@ -71,7 +71,7 @@ def test_write_then_read_roundtrip(agent, fixture, tmp_path, monkeypatch):
         assert newest != src
         os.utime(newest, (time.time() + 5, time.time() + 5))
     else:
-        monkeypatch.setenv("CTXPIPE_OPENCODE_SESSION", s.meta["new_session_id"])
+        monkeypatch.setenv("CODEC_OPENCODE_SESSION", s.meta["new_session_id"])
     again = ad.read(tmp_path)
     assert [m.content for m in again.messages if m.role != "tool"] == texts
 

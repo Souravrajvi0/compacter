@@ -1,4 +1,4 @@
-# ctxpipe
+# codec
 
 **Context control for CLI coding agents. You decide what the agent remembers.**
 
@@ -12,7 +12,7 @@ find out what was lost when the agent forgets a constraint you set an hour ago.
 
 ## The solution
 
-ctxpipe is a thin control layer between you and the agent. It keeps a master
+codec is a thin control layer between you and the agent. It keeps a master
 transcript in one common format, and the agent only ever sees a *view* of it,
 built from your policies and tags. Compaction is preview-then-apply: you read
 the summary before the agent ever sees it.
@@ -21,23 +21,23 @@ the summary before the agent ever sees it.
 
 - Policy-aware compaction: `keep_verbatim`, `summarize_ok`, `drop_ok`, `drop_always`
 - Rich per-message rules: `keep_verbatim_until`, `drop_ok_after`, `summarize_detail`, tool-result truncation/section-keeping/error-conditional dropping
-- Scoped policies in `ctxpipe.yaml` (`file:`, `tag:`, `role:`, `tool_result`) — most-specific match wins, strictest breaks ties
+- Scoped policies in `codec.yaml` (`file:`, `tag:`, `role:`, `tool_result`) — most-specific match wins, strictest breaks ties
 - Structured, schema-driven JSON summaries (goals/constraints/decisions/open_tasks/key_files) with layered `summary_high/medium/low` that degrades gracefully under token pressure
 - `tool_use`/`tool_result` pairing — compaction never splits a pair across the summary boundary
 - Chained compactions: every `--apply` is recorded in `meta.compactions` and the previous structured summary is merged by the LLM
 - Real token counts (tiktoken) with graceful fallback
 - Prompt profiles: `--profile conservative|aggressive|code-heavy`
-- `ctxpipe auto-tag`: conservative heuristic tag suggestions (writes only with `--apply`)
+- `codec auto-tag`: conservative heuristic tag suggestions (writes only with `--apply`)
 - Adapters for Claude Code, Codex, Aider, and plain JSON
-- Live wrapper: `ctxpipe wrap` intercepts `/compact` inside the agent
+- Live wrapper: `codec wrap` intercepts `/compact` inside the agent
 - Automatic compaction (opt-in): pressure-based triggers, risk assessment, verification, circuit breakers — see below
-- LLM-as-judge evals: `ctxpipe eval --task ...` checks the compacted view still supports the task
+- LLM-as-judge evals: `codec eval --task ...` checks the compacted view still supports the task
 - Benchmarks vs naive agent compaction — see docs/BENCHMARKS.md (~5.7× token cut, no secret leakage)
 
 ## Getting started
 
 ```bash
-pip install ctxpipe              # from PyPI
+pip install codec-cli          # from PyPI (installs the `codec` command)
 pip install .                     # or from a clone of this repo
 pip install ".[dev,anthropic]"    # with tests + Anthropic summarizer
 # No API key needed: summaries are written by the agent you already use (claude / codex / opencode).
@@ -50,12 +50,12 @@ Works with any adapter. Example with Aider:
 
 ```bash
 cd ./my-repo
-ctxpipe start --agent aider          # import the current session
-ctxpipe status                       # see messages with tags/policies
-ctxpipe tag last --as goal           # pin the original task
-ctxpipe mark 4 --policy drop_always  # keep a pasted secret out of context
-ctxpipe compact --preview            # see the plan + summary
-ctxpipe compact --apply              # write the compacted session
+codec start --agent aider          # import the current session
+codec status                       # see messages with tags/policies
+codec tag last --as goal           # pin the original task
+codec mark 4 --policy drop_always  # keep a pasted secret out of context
+codec compact --preview            # see the plan + summary
+codec compact --apply              # write the compacted session
 ```
 
 ## Tags and policies
@@ -79,20 +79,20 @@ ctxpipe compact --apply              # write the compacted session
 **Long coding session with tool logs**
 
 ```bash
-ctxpipe start --agent codex
-for i in 3 5 7; do ctxpipe mark $i --policy drop_ok; done
-ctxpipe drop-last 4            # last failed attempts shouldn't stick
-ctxpipe compact --preview
-ctxpipe compact --apply
+codec start --agent codex
+for i in 3 5 7; do codec mark $i --policy drop_ok; done
+codec drop-last 4            # last failed attempts shouldn't stick
+codec compact --preview
+codec compact --apply
 ```
 
 **Keep constraints, drop experimental branches**
 
 ```bash
-ctxpipe tag 0 --as constraint
-ctxpipe tag 1 --as goal
-ctxpipe mark last --policy drop_always   # discard the branch you abandoned
-ctxpipe compact --apply --threshold 6000 # only compacts if over 6k tokens
+codec tag 0 --as constraint
+codec tag 1 --as goal
+codec mark last --policy drop_always   # discard the branch you abandoned
+codec compact --apply --threshold 6000 # only compacts if over 6k tokens
 ```
 
 **Repeated compactions over days**
@@ -101,26 +101,26 @@ Each `--apply` replaces the master transcript and appends to `meta.compactions`,
 so today's summary becomes input to tomorrow's compaction instead of being lost.
 
 ```bash
-ctxpipe compact --apply --keep-recent 4
+codec compact --apply --keep-recent 4
 # ... work more ...
-ctxpipe compact --apply --keep-recent 4   # chained: previous summary is kept
+codec compact --apply --keep-recent 4   # chained: previous summary is kept
 ```
 
 **Live wrapper**
 
 ```bash
-ctxpipe wrap --agent claude-code -- claude
+codec wrap --agent claude-code -- claude
 ```
 
 Inside the agent session, typing `/compact` does not run the agent's own
-compaction. ctxpipe intercepts it: it builds a policy-aware summary, writes a
+compaction. codec intercepts it: it builds a policy-aware summary, writes a
 new session file (the original is never overwritten), ends the agent process,
 and prints the `--resume` command for the compacted session. Sessions live in
-`<project>/.ctxpipe/session.jsonl` (master) and each agent's native store.
+`<project>/.codec/session.jsonl` (master) and each agent's native store.
 
 ## Advanced: scoped policies & rules
 
-`ctxpipe.yaml` in the project root overrides scopes only where set (copy-ready
+`codec.yaml` in the project root overrides scopes only where set (copy-ready
 files in `examples/configs/`, patterns in `docs/RECIPES.md`):
 
 ```yaml
@@ -141,14 +141,14 @@ auto_tagging:
 Precedence: `file:` > `tag:` > `role:` > `tool_result` > default; ties broken by the
 strictest rule; an explicit per-message `rule` always wins field-by-field.
 
-`ctxpipe auto-tag` scans for `goal:`/`constraint:`/`we decided` patterns and
+`codec auto-tag` scans for `goal:`/`constraint:`/`we decided` patterns and
 suggests tags (tags only by default; set-keep-verbatim via the config list or
 `--also-set-keep-verbatim`).
 
 ## Automatic compaction (opt-in)
 
-Off by default. Enable with `ctxpipe auto-compact enable` (writes `ctxpipe.yaml`) or
-set `auto_compaction.enabled: true`. ctxpipe watches *effective* context pressure
+Off by default. Enable with `codec auto-compact enable` (writes `codec.yaml`) or
+set `auto_compaction.enabled: true`. codec watches *effective* context pressure
 (visible tokens + system/tool schemas + reserved output/tool tokens, relative to
 `context_window`) and acts at three thresholds:
 
@@ -163,7 +163,7 @@ Safety rails:
 
 - **Safe boundaries only** — never mid `tool_use`/`tool_result` pair, or while the
   checkpoint phase is migrating/rebasing/committing/deploying.
-- **Risk assessment** (`ctxpipe auto-compact assess`) scores semantic risk from pinned
+- **Risk assessment** (`codec auto-compact assess`) scores semantic risk from pinned
   ratio, pending steps, user-modified files and unresolved questions.
 - **Verification before apply** — pinned messages preserved, `drop_always` content not
   leaked, essence directives satisfied, tool pairs intact, completed work not
@@ -175,7 +175,7 @@ Safety rails:
 - **Continuity checkpoint** — phase, permissions, next action, files touched by you vs the
   agent, pending steps are captured deterministically and kept as one pinned block that is
   verified to survive every compaction.
-- **Rollback** — a snapshot is taken before each automatic apply (`ctxpipe auto-compact rollback`);
+- **Rollback** — a snapshot is taken before each automatic apply (`codec auto-compact rollback`);
   master-transcript writes are atomic. Recipes and real output: `docs/RECIPES.md`.
 - **Audit trail** — every automatic apply is recorded in `meta.compactions`
   (`automatic: true`, pressure, assessment, verification, user action).
@@ -196,10 +196,10 @@ auto_compaction:
 ```
 
 ```bash
-ctxpipe auto-compact status|enable|disable|assess|reset-cooldown|rollback
-ctxpipe compact --auto                 # one automatic evaluation (prompts if needed)
-ctxpipe compact --apply-if-valid       # automatic, never asks, applies only if verified
-ctxpipe wrap --agent claude-code --auto-compact -- claude   # bare flag = use config; or ask|apply|off
+codec auto-compact status|enable|disable|assess|reset-cooldown|rollback
+codec compact --auto                 # one automatic evaluation (prompts if needed)
+codec compact --apply-if-valid       # automatic, never asks, applies only if verified
+codec wrap --agent claude-code --auto-compact -- claude   # bare flag = use config; or ask|apply|off
 ```
 
 ## Carry chosen messages into a new chat
@@ -208,9 +208,9 @@ You don't have to compact a whole chat. Pick just the messages worth keeping (th
 or index ranges), and bring only those into a fresh chat. The original chat is never changed.
 
 ```bash
-ctxpipe carry --agent opencode                  # checklist: tick messages, they are summarized
-ctxpipe carry --agent codex --only 3-9,14 --new # ranges; also writes a ready-to-resume new chat
-ctxpipe carry --agent claude-code --only 0 --verbatim --name vault   # carry word for word
+codec carry --agent opencode                  # checklist: tick messages, they are summarized
+codec carry --agent codex --only 3-9,14 --new # ranges; also writes a ready-to-resume new chat
+codec carry --agent claude-code --only 0 --verbatim --name vault   # carry word for word
 ```
 
 In Claude Code or Codex (with the hook installed):
@@ -226,16 +226,16 @@ In Claude Code or Codex (with the hook installed):
 
 A compaction is worth keeping. Save it as a **pack** and start any future chat from it, in any
 project and with any agent. Packs hold the latest summary plus the messages you pinned
-(goal / constraint / keep_verbatim) and live in `~/.ctxpipe/packs` (override with `CTXPIPE_HOME`).
+(goal / constraint / keep_verbatim) and live in `~/.codec/packs` (override with `CODEC_HOME`).
 
 ```bash
-ctxpipe compact --apply                      # compact a chat as usual
-ctxpipe pack save login-fix --note "auth work"
-ctxpipe pack list
-ctxpipe new --agent claude-code --from login-fix   # a brand-new chat that starts with the pack
+codec compact --apply                      # compact a chat as usual
+codec pack save login-fix --note "auth work"
+codec pack list
+codec new --agent claude-code --from login-fix   # a brand-new chat that starts with the pack
 ```
 
-Inside Claude Code (with `ctxpipe install-claude-code`), no terminal switch is needed:
+Inside Claude Code (with `codec install-claude-code`), no terminal switch is needed:
 
 ```
 /compacter pack save login-fix     save the latest compaction
@@ -249,16 +249,16 @@ or `opencode --session <id>`.
 
 ## Agent compatibility
 
-ctxpipe reads each agent's own session files, which can change between releases. Verified versions
+codec reads each agent's own session files, which can change between releases. Verified versions
 (each has a fixture in `tests/data/compat/`): Claude Code 2.1.296, Codex 0.144.6, opencode 1.18.35.
-Run `ctxpipe doctor` to compare your installed versions with these.
+Run `codec doctor` to compare your installed versions with these.
 
 ## Why this exists
 
 CLI coding agents fill their context window and then compact it themselves —
 lossy, opaque, and unsteerable. A secret pasted once keeps being re-sent
 forever; a failed experiment keeps eating tokens after it stopped mattering.
-ctxpipe treats context as something *you* manage: tags and policies decide
+codec treats context as something *you* manage: tags and policies decide
 what is summarized, deterministically; the LLM only decides how to phrase it.
 This is the same "keep-verbatim zones, selective eviction" pattern used in
 production context-engineering, made explicit and portable across agents.
@@ -268,7 +268,7 @@ production context-engineering, made explicit and portable across agents.
 ```
             user
              |
-          ctxpipe CLI
+          codec CLI
              |
    +---------+----------+
    |   core (no agent   |   models: Message / Policy / Session
@@ -295,15 +295,15 @@ Principles:
 ## Repo layout
 
 ```
-src/ctxpipe/core/       models, store, compaction, autocontrol, tokens, prompts
-src/ctxpipe/adapters/   base + registry, claude_code, codex, aider, opencode, generic_api
-src/ctxpipe/llm/        summarizer providers (Anthropic, key pool)
-src/ctxpipe/cli.py      argparse front end
-src/ctxpipe/wrapper.py  live wrapper mode
-src/ctxpipe/evals.py    LLM-as-judge evals
+src/codec/core/       models, store, compaction, autocontrol, tokens, prompts
+src/codec/adapters/   base + registry, claude_code, codex, aider, opencode, generic_api
+src/codec/llm/        summarizer providers (Anthropic, key pool)
+src/codec/cli.py      argparse front end
+src/codec/wrapper.py  live wrapper mode
+src/codec/evals.py    LLM-as-judge evals
 examples/              demo repo: before/after compaction snapshots
 evals/                 canonical eval tasks + results
-benchmarks/            naive-vs-ctxpipe compaction benchmark
+benchmarks/            naive-vs-codec compaction benchmark
 tests/                 engine, store, adapter, wrapper, eval tests
 docs/ROADMAP.md        done/next
 docs/BENCHMARKS.md     benchmark write-up

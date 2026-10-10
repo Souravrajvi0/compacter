@@ -1,6 +1,6 @@
 import pytest
 
-from ctxpipe.llm.key_pool import AllKeysUnavailable, KeyPool, keys_from_env
+from codec.llm.key_pool import AllKeysUnavailable, KeyPool, keys_from_env
 
 
 class RateLimited(Exception):
@@ -55,10 +55,10 @@ def test_all_keys_fail():
 
 
 def test_keys_from_env(monkeypatch):
-    for n in ("ANTHROPIC_API_KEY", "ANTHROPIC_API_KEY_2", "CTXPIPE_ANTHROPIC_KEYS"):
+    for n in ("ANTHROPIC_API_KEY", "ANTHROPIC_API_KEY_2", "CODEC_ANTHROPIC_KEYS"):
         monkeypatch.delenv(n, raising=False)
     monkeypatch.setenv("ANTHROPIC_API_KEY", "x")
     monkeypatch.setenv("ANTHROPIC_API_KEY_2", "y")
     assert keys_from_env("ANTHROPIC") == ["x", "y"]
-    monkeypatch.setenv("CTXPIPE_ANTHROPIC_KEYS", "p, q ,p")
+    monkeypatch.setenv("CODEC_ANTHROPIC_KEYS", "p, q ,p")
     assert keys_from_env("ANTHROPIC") == ["p", "q"]

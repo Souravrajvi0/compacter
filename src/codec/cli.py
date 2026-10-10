@@ -1,4 +1,4 @@
-"""ctxpipe CLI. Thin layer: parse args, call core + adapters, print."""
+"""codec CLI. Thin layer: parse args, call core + adapters, print."""
 from __future__ import annotations
 
 import argparse
@@ -244,7 +244,7 @@ def cmd_compact(args: argparse.Namespace) -> int:
     })
     store.save(view, project)
     if new_id := view.meta.get("new_session_id"):
-        print(f"CTXPIPE_NEW_SESSION={new_id}")
+        print(f"CODEC_NEW_SESSION={new_id}")
     print(f"wrote compacted session -> {out}; master transcript updated at {store.store_path(project)}")
     return 0
 
@@ -313,7 +313,7 @@ def cmd_ac_disable(args: argparse.Namespace) -> int:
 def _set_auto(project: Path, enabled: bool) -> int:
     import yaml
 
-    path = project / "ctxpipe.yaml"
+    path = project / "codec.yaml"
     raw = yaml.safe_load(path.read_text(encoding="utf-8")) if path.exists() else {}
     raw = raw or {}
     raw.setdefault("auto_compaction", {})["enabled"] = enabled
@@ -384,7 +384,7 @@ def cmd_auto_tag(args: argparse.Namespace) -> int:
     s = store.load(project)
     cfg = load_config(project)
     if not cfg.auto_tagging.enabled:
-        print("auto-tagging disabled in ctxpipe.yaml")
+        print("auto-tagging disabled in codec.yaml")
         return 0
     min_conf = args.min_confidence if args.min_confidence is not None else cfg.auto_tagging.min_confidence
     suggestions = autotag.suggest(s, min_confidence=min_conf)
@@ -424,7 +424,7 @@ def cmd_install_opencode(args: argparse.Namespace) -> int:
     import shutil
 
     cfg_dir = Path(args.config_dir).expanduser() if args.config_dir else Path.home() / ".config" / "opencode"
-    dest = cfg_dir / "ctxpipe" / "compacter.mjs"
+    dest = cfg_dir / "codec" / "compacter.mjs"
     tui_json = cfg_dir / "tui.json"
     spec = dest.resolve().as_uri()
     try:
@@ -443,9 +443,9 @@ def cmd_install_opencode(args: argparse.Namespace) -> int:
     else:
         src = Path(__file__).parent / "integrations" / "opencode_tui.mjs"
         dest.parent.mkdir(parents=True, exist_ok=True)
-        exe = shutil.which("ctxpipe")
-        cmd = [Path(exe).as_posix()] if exe else [Path(sys.executable).as_posix(), "-m", "ctxpipe"]
-        code = src.read_text(encoding="utf-8").replace(': ["ctxpipe"] // CTXPIPE_CMD', f": {json.dumps(cmd)} // CTXPIPE_CMD")
+        exe = shutil.which("codec")
+        cmd = [Path(exe).as_posix()] if exe else [Path(sys.executable).as_posix(), "-m", "codec"]
+        code = src.read_text(encoding="utf-8").replace(': ["codec"] // CODEC_CMD', f": {json.dumps(cmd)} // CODEC_CMD")
         dest.write_text(code, encoding="utf-8")
         data.setdefault("$schema", "https://opencode.ai/tui.json")
         data["plugin"] = [*plugins, spec]
@@ -460,17 +460,17 @@ def cmd_install_opencode(args: argparse.Namespace) -> int:
 def _hook_command(agent: str) -> str:
     import shutil
 
-    exe = shutil.which("ctxpipe")
-    base = f'"{Path(exe).as_posix()}"' if exe else f'"{Path(sys.executable).as_posix()}" -m ctxpipe'
+    exe = shutil.which("codec")
+    base = f'"{Path(exe).as_posix()}"' if exe else f'"{Path(sys.executable).as_posix()}" -m codec'
     return f"{base} hook --agent {agent}"
 
 
 FALLBACK_COMMAND = """---
-description: Choose which messages to compact, or reuse a saved context pack (ctxpipe)
+description: Choose which messages to compact, or reuse a saved context pack (codec)
 ---
-The ctxpipe hook normally answers this command before it reaches you.
-If a ctxpipe context pack was just added to this chat, confirm that in one short sentence and wait.
-Otherwise tell the user the hook is not installed: run `ctxpipe install-claude-code` in a terminal.
+The codec hook normally answers this command before it reaches you.
+If a codec context pack was just added to this chat, confirm that in one short sentence and wait.
+Otherwise tell the user the hook is not installed: run `codec install-claude-code` in a terminal.
 """
 
 
@@ -487,7 +487,7 @@ def cmd_install_claude_code(args: argparse.Namespace) -> int:
         print(f"  {_hook_command('claude-code')}")
         return 1
     groups = data.setdefault("hooks", {}).setdefault("UserPromptSubmit", [])
-    mine = lambda g: any(" hook --agent claude-code" in h.get("command", "") and "ctxpipe" in h.get("command", "")
+    mine = lambda g: any(" hook --agent claude-code" in h.get("command", "") and "codec" in h.get("command", "")
                          for h in g.get("hooks", []))
     groups[:] = [g for g in groups if not mine(g)]
     cmd_file = home / "commands" / "compacter.md"
@@ -505,7 +505,7 @@ def cmd_install_claude_code(args: argparse.Namespace) -> int:
     if not data["hooks"]:
         data.pop("hooks")
     if path.exists():
-        shutil.copyfile(path, path.with_suffix(".json.ctxpipe-bak"))
+        shutil.copyfile(path, path.with_suffix(".json.codec-bak"))
     home.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2) + os.linesep, encoding="utf-8")
     return 0
@@ -541,7 +541,7 @@ def cmd_pack(args: argparse.Namespace) -> int:
         elif args.action == "list":
             rows = packs.list_packs()
             if not rows:
-                print("no packs yet; compact a chat, then `ctxpipe pack save NAME`")
+                print("no packs yet; compact a chat, then `codec pack save NAME`")
             for r in rows:
                 note = f"  {r['note']}" if r["note"] else ""
                 print(f"{r['name']:<24} {r['created_at']}  {r['agent']:<12} {r['pinned']} pinned{note}")
@@ -569,7 +569,7 @@ def cmd_new(args: argparse.Namespace) -> int:
     out = get_adapter(args.agent).write(seeded, project)
     new_id = seeded.meta.get("new_session_id")
     if new_id:
-        print(f"CTXPIPE_NEW_SESSION={new_id}")
+        print(f"CODEC_NEW_SESSION={new_id}")
     print(f"new {args.agent} chat seeded with pack {args.pack!r} -> {out}")
     print(f"continue with:  {resume_command(args.agent, new_id, out)}")
     return 0
@@ -618,17 +618,17 @@ def cmd_carry(args: argparse.Namespace) -> int:
     if not res.structured:
         print("warning: the summarizer did not return structured JSON; stored as plain text", file=sys.stderr)
     if res.new_session_id:
-        print(f"CTXPIPE_NEW_SESSION={res.new_session_id}")
+        print(f"CODEC_NEW_SESSION={res.new_session_id}")
     if res.new_chat:
         print(f"new chat written -> {res.new_chat}")
         print(f"continue with:  {res.resume}")
     else:
-        print(f"start a new chat with it:  ctxpipe new --agent {args.to or args.agent} --from {res.name}")
+        print(f"start a new chat with it:  codec new --agent {args.to or args.agent} --from {res.name}")
     return 0
 
 
 def cmd_doctor(args: argparse.Namespace) -> int:
-    """Compare installed agent versions with the versions ctxpipe has been verified against."""
+    """Compare installed agent versions with the versions codec has been verified against."""
     from . import compat
 
     reports = compat.check_all()
@@ -638,7 +638,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    ap = argparse.ArgumentParser(prog="ctxpipe", description=__doc__)
+    ap = argparse.ArgumentParser(prog="codec", description=__doc__)
     ap.add_argument("--version", action="version", version=__version__)
     ap.add_argument("--project", default=".", help="project directory (default: .)")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -685,7 +685,7 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--only", default=None, metavar="RANGES",
                     help="compact only these message indexes, e.g. 0,3-5,-2 (others stay verbatim)")
     sp.add_argument("--only-ids", default=None, metavar="IDS",
-                    help="compact only these message ids (ctxpipe or agent ids, comma/space "
+                    help="compact only these message ids (codec or agent ids, comma/space "
                          "separated; '-' reads them from stdin). Used by the opencode plugin")
     sp.add_argument("--llm", default="auto")
     sp.set_defaults(fn=cmd_compact)
@@ -761,8 +761,8 @@ def build_parser() -> argparse.ArgumentParser:
     acp = sub.add_parser("auto-compact", help="manage automatic compaction")
     acpsub = acp.add_subparsers(dest="acmd", required=True)
     acpsub.add_parser("status", help="show auto-compaction status").set_defaults(fn=cmd_ac_status)
-    acpsub.add_parser("enable", help="enable in ctxpipe.yaml").set_defaults(fn=cmd_ac_enable)
-    acpsub.add_parser("disable", help="disable in ctxpipe.yaml").set_defaults(fn=cmd_ac_disable)
+    acpsub.add_parser("enable", help="enable in codec.yaml").set_defaults(fn=cmd_ac_enable)
+    acpsub.add_parser("disable", help="disable in codec.yaml").set_defaults(fn=cmd_ac_disable)
     acpsub.add_parser("assess", help="print a compactability assessment").set_defaults(fn=cmd_ac_assess)
     acpsub.add_parser("reset-cooldown", help="clear cooldown metadata").set_defaults(fn=cmd_ac_reset)
     acpsub.add_parser("rollback", help="restore the transcript from before the last automatic compaction"

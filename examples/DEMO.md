@@ -36,7 +36,7 @@ Artifacts in `sessions/`:
 ## Eval verdict
 
 ```bash
-ctxpipe eval --task "preserve the goal and the no-secrets constraint"
+codec eval --task "preserve the goal and the no-secrets constraint"
 ```
 
 With the real LLM judge this prints `PASS - goal and constraint survive as

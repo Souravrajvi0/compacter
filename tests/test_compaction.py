@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from ctxpipe.core import compaction, store
-from ctxpipe.core.models import Message, Policy, Session
+from codec.core import compaction, store
+from codec.core.models import Message, Policy, Session
 
 
 class FakeLLM:
@@ -56,7 +56,7 @@ def test_rebuild_order_and_master_untouched():
 
 
 def test_master_transcript_updated_after_apply(tmp_path: Path, monkeypatch):
-    import ctxpipe.cli as cli
+    import codec.cli as cli
 
     s = make_session()
     store.save(s, tmp_path)
@@ -68,7 +68,7 @@ def test_master_transcript_updated_after_apply(tmp_path: Path, monkeypatch):
             return project / "out.json"
 
     monkeypatch.setattr(cli, "get_adapter", lambda name: FakeAdapter())
-    monkeypatch.setattr("ctxpipe.llm.get_llm", lambda p="auto", **kw: FakeLLM())
+    monkeypatch.setattr("codec.llm.get_llm", lambda p="auto", **kw: FakeLLM())
 
     rc = cli.main(["--project", str(tmp_path), "compact", "--apply", "--keep-recent", "2"])
     assert rc == 0
@@ -81,7 +81,7 @@ def test_master_transcript_updated_after_apply(tmp_path: Path, monkeypatch):
 
 
 def test_threshold_skips_compaction(tmp_path: Path, monkeypatch, capsys):
-    import ctxpipe.cli as cli
+    import codec.cli as cli
 
     s = make_session()
     store.save(s, tmp_path)

@@ -1,4 +1,4 @@
-"""Project config: <project>/ctxpipe.yaml (all sections optional)."""
+"""Project config: <project>/codec.yaml (all sections optional)."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -11,7 +11,7 @@ from .core.autocontrol import AutoCompactConfig
 from .core.models import Rule
 from .core.scopes import ScopeRule, scope_matches, specificity  # noqa: F401  (re-export)
 
-CONFIG_FILE = "ctxpipe.yaml"
+CONFIG_FILE = "codec.yaml"
 
 
 @dataclass

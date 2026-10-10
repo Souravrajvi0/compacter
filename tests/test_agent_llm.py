@@ -4,8 +4,8 @@ import subprocess
 
 import pytest
 
-from ctxpipe import hook
-from ctxpipe.llm import base, cli_llm
+from codec import hook
+from codec.llm import base, cli_llm
 
 
 def _done(out="", err="", code=0):
@@ -21,12 +21,12 @@ def test_auto_prefers_the_agent_in_use(monkeypatch):
 
 def test_auto_falls_back_to_api_key_then_errors(monkeypatch):
     monkeypatch.setattr(cli_llm, "available", lambda kind: False)
-    for k in ("ANTHROPIC_API_KEY", "CTXPIPE_ANTHROPIC_KEYS"):
+    for k in ("ANTHROPIC_API_KEY", "CODEC_ANTHROPIC_KEYS"):
         monkeypatch.delenv(k, raising=False)
     with pytest.raises(RuntimeError, match="no summarizer"):
         base.get_llm("auto", agent="claude-code")
     monkeypatch.setenv("ANTHROPIC_API_KEY", "x")
-    monkeypatch.setattr("ctxpipe.llm.anthropic_llm.AnthropicLLM", lambda: "api")
+    monkeypatch.setattr("codec.llm.anthropic_llm.AnthropicLLM", lambda: "api")
     assert base.get_llm("auto") == "api"
 
 
@@ -74,6 +74,6 @@ def test_failure_is_reported(monkeypatch):
 
 
 def test_hook_ignores_nested_calls(monkeypatch, capsys):
-    monkeypatch.setenv("CTXPIPE_NESTED", "1")
+    monkeypatch.setenv("CODEC_NESTED", "1")
     monkeypatch.setattr("sys.stdin", io.StringIO(json.dumps({"prompt": "/compacter carry", "cwd": "."})))
     assert hook.run("claude-code") == 0 and capsys.readouterr().out == ""

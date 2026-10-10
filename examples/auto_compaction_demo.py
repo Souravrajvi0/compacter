@@ -16,9 +16,9 @@ from pathlib import Path
 HERE = Path(__file__).parent
 sys.path.insert(0, str(HERE.parent / "src"))
 
-from ctxpipe.core import compaction, store  # noqa: E402
-from ctxpipe.core.autocontrol import AutoCompactConfig, AutoCompactController, capture_checkpoint  # noqa: E402
-from ctxpipe.core.tokens import estimate_tokens, session_tokens  # noqa: E402
+from codec.core import compaction, store  # noqa: E402
+from codec.core.autocontrol import AutoCompactConfig, AutoCompactController, capture_checkpoint  # noqa: E402
+from codec.core.tokens import estimate_tokens, session_tokens  # noqa: E402
 
 
 class StubLLM:
@@ -48,9 +48,9 @@ class ScriptedUI:
 
 
 def load_session() -> tuple[Path, object]:
-    tmp = Path(tempfile.mkdtemp(prefix="ctxpipe-auto-"))
-    (tmp / ".ctxpipe").mkdir()
-    shutil.copy(HERE / "sessions" / "original.jsonl", tmp / ".ctxpipe" / "session.jsonl")
+    tmp = Path(tempfile.mkdtemp(prefix="codec-auto-"))
+    (tmp / ".codec").mkdir()
+    shutil.copy(HERE / "sessions" / "original.jsonl", tmp / ".codec" / "session.jsonl")
     return tmp, store.load(tmp)
 
 

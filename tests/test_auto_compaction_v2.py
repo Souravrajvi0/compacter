@@ -6,14 +6,14 @@ from pathlib import Path
 
 import pytest
 
-from ctxpipe import wrapper
-from ctxpipe.core import compaction, store
-from ctxpipe.core.autocontrol import (
+from codec import wrapper
+from codec.core import compaction, store
+from codec.core.autocontrol import (
     CHECKPOINT_TAG, AutoCompactController, assess, capture_checkpoint, collect_exact_facts,
     insert_checkpoint, repair, review_diff, review_items, review_summary, transcript_hash, verify,
 )
-from ctxpipe.core.models import Message, Policy, Session
-from ctxpipe.core.tokens import session_tokens
+from codec.core.models import Message, Policy, Session
+from codec.core.tokens import session_tokens
 
 from test_auto_compaction import FakeLLM, big_session, candidate_from, mkcfg, msg, sized
 
@@ -158,12 +158,12 @@ def _wrapper_project(tmp_path, ratio=0.8, extra_cfg=""):
                                "cooldown_turns": 0, "min_projected_reduction": 0.2, "min_reduction": 0.2,
                                "keep_recent": 2}}
     cfg["auto_compaction"].update(yaml.safe_load(extra_cfg) or {})
-    (tmp_path / "ctxpipe.yaml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
+    (tmp_path / "codec.yaml").write_text(yaml.safe_dump(cfg), encoding="utf-8")
 
 
 def test_wrapper_ask_mode_prompts(tmp_path, monkeypatch):
     _wrapper_project(tmp_path)
-    monkeypatch.setattr("ctxpipe.llm.get_llm", lambda name="auto", **kw: FakeLLM())
+    monkeypatch.setattr("codec.llm.get_llm", lambda name="auto", **kw: FakeLLM())
     ui = ScriptUI(["l"])
     rc = wrapper._maybe_auto_compact(tmp_path, "generic-api", "x", 2, "ask", "hello\n", FakeChild(),
                                      ui=ui, interactive=True)
@@ -173,7 +173,7 @@ def test_wrapper_ask_mode_prompts(tmp_path, monkeypatch):
 
 def test_wrapper_apply_mode_never_blocks(tmp_path, monkeypatch):
     _wrapper_project(tmp_path)
-    monkeypatch.setattr("ctxpipe.llm.get_llm", lambda name="auto", **kw: FakeLLM())
+    monkeypatch.setattr("codec.llm.get_llm", lambda name="auto", **kw: FakeLLM())
     rc = wrapper._maybe_auto_compact(tmp_path, "generic-api", "x", 2, "apply", "hello\n", FakeChild(),
                                      interactive=False)
     assert rc == 0  # compacted, child stopped
@@ -182,7 +182,7 @@ def test_wrapper_apply_mode_never_blocks(tmp_path, monkeypatch):
 
 def test_wrapper_apply_if_valid_without_tty(tmp_path, monkeypatch):
     _wrapper_project(tmp_path, extra_cfg="{ask_user: always, noninteractive_action: apply-if-valid}")
-    monkeypatch.setattr("ctxpipe.llm.get_llm", lambda name="auto", **kw: FakeLLM())
+    monkeypatch.setattr("codec.llm.get_llm", lambda name="auto", **kw: FakeLLM())
     # ask_user=always + non-interactive + apply-if-valid used to have no compactor at all
     wrapper._maybe_auto_compact(tmp_path, "generic-api", "x", 2, "config", "hello\n", FakeChild(),
                                 interactive=False)
@@ -196,7 +196,7 @@ def test_wrapper_off_never_builds_controller(tmp_path, monkeypatch):
     def boom(*a, **k):
         raise AssertionError("controller built")
 
-    monkeypatch.setattr("ctxpipe.core.autocontrol.AutoCompactController", boom)
+    monkeypatch.setattr("codec.core.autocontrol.AutoCompactController", boom)
     assert wrapper._maybe_auto_compact(tmp_path, "generic-api", "x", 2, "off", "hello\n", FakeChild()) is None
 
 
