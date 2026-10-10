@@ -1,0 +1,13 @@
+{
+  "name": "compacter",
+  "version": "2.2.0",
+  "description": "Policy-based context control for CLI coding agents (Claude Code, Codex, opencode): choose what gets compacted, carry context between chats.",
+  "bin": { "compacter": "bin/compacter.js" },
+  "files": ["bin", "README.md"],
+  "engines": { "node": ">=16" },
+  "keywords": ["claude-code", "codex", "opencode", "context", "compaction", "llm", "coding-agents"],
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/Souravrajvi0/compacter.git" },
+  "homepage": "https://github.com/Souravrajvi0/compacter",
+  "bugs": { "url": "https://github.com/Souravrajvi0/compacter/issues" }
+}

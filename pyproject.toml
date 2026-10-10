@@ -21,7 +21,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
-dependencies = ["tiktoken>=0.7"]
+dependencies = ["tiktoken>=0.7", "pyyaml>=6"]
 
 [project.optional-dependencies]
 anthropic = ["anthropic>=0.40"]
