@@ -1,10 +1,11 @@
 """Which agent versions ctxpipe has been verified against, and a check for the one you have installed.
 
-Every fixture under tests/data/compat/<agent>/<version>.* is a verified version. Adding support for a
-new release = drop its fixture there; the compat tests pick it up.
+The list lives in verified_versions.json (shipped in the wheel). Each entry must have a fixture under
+tests/data/compat/<agent>/<version>.*; tests/test_compat.py enforces that the two stay in sync.
 """
 from __future__ import annotations
 
+import json
 import re
 import shutil
 import subprocess
@@ -12,7 +13,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 CLI = {"claude-code": "claude", "codex": "codex", "opencode": "opencode"}
-FIXTURES = Path(__file__).resolve().parents[2] / "tests" / "data" / "compat"
+VERIFIED_FILE = Path(__file__).with_name("verified_versions.json")
+FIXTURES = Path(__file__).resolve().parents[2] / "tests" / "data" / "compat"  # repo checkouts only
 _VERSION = re.compile(r"\d+\.\d+\.\d+")
 
 _NOTES = {
@@ -40,12 +42,17 @@ def _key(v: str) -> tuple[int, ...]:
     return tuple(int(x) for x in v.split("."))
 
 
-def tested_versions(agent: str, root: Path = FIXTURES) -> list[str]:
+def tested_versions(agent: str) -> list[str]:
+    data = json.loads(VERIFIED_FILE.read_text(encoding="utf-8"))
+    return sorted(data.get(agent, []), key=_key)
+
+
+def fixture_versions(agent: str, root: Path = FIXTURES) -> list[str]:
+    """Versions that have a fixture on disk (repo checkout only)."""
     d = root / agent
     if not d.is_dir():
         return []
-    found = {m.group(0) for p in d.iterdir() if (m := _VERSION.match(p.name))}
-    return sorted(found, key=_key)
+    return sorted({m.group(0) for p in d.iterdir() if (m := _VERSION.match(p.name))}, key=_key)
 
 
 def installed_version(agent: str) -> str | None:

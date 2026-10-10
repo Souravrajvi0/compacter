@@ -135,6 +135,8 @@ def _carry(args: list[str], project: Path, agent: str, llm_name: str) -> str:
         return str(e)
     how = "word for word" if res.verbatim else "summarized"
     out = f"Carried {res.count} messages ({how}) into pack {res.name!r}. The original chat is untouched.\n"
+    if not res.structured:
+        out += "Warning: the summarizer did not return structured JSON, so the summary was stored as plain text.\n"
     if res.resume:
         return out + f"New chat is ready:\n  {res.resume}"
     return out + f"In a new chat, run:  /compacter pack load {res.name}"

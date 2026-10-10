@@ -87,3 +87,16 @@ def test_hook_carry_list_and_pick(tmp_path, monkeypatch):
     out2 = hook.respond("/compacter carry 1 verbatim new", tmp_path, "claude-code")
     assert "claude --resume" in out2
     assert "Unknown option" in hook.respond("/compacter carry banana", tmp_path, "claude-code")
+
+
+def test_unstructured_summary_is_flagged(tmp_path, monkeypatch):
+    class Prose:
+        def complete(self, system, user, max_tokens=2048):
+            return "just some prose, not JSON"
+
+    monkeypatch.setattr("ctxpipe.llm.get_llm", lambda name="auto", **kw: Prose())
+    s = _chat()
+    bad = carry(s, {s.messages[0].id}, tmp_path, name="bad")
+    assert bad.structured is False
+    assert "just some prose" in packs.render_markdown(packs.load_pack("bad"))
+    assert carry(s, {s.messages[0].id}, tmp_path, name="v", verbatim=True).structured is True

@@ -13,6 +13,7 @@ from .adapters import get_adapter
 from .adapters.base import resume_command
 from .core import compaction, packs
 from .core.models import Session
+from .core.summary import parse_structured_summary
 
 
 @dataclass
@@ -24,6 +25,7 @@ class CarryResult:
     new_chat: Path | None = None
     resume: str | None = None
     new_session_id: str | None = None
+    structured: bool = True  # False: the summarizer's reply was not valid structured JSON; stored as plain text
 
 
 def default_name() -> str:
@@ -44,7 +46,8 @@ def carry(session: Session, ids: set[str], project: Path, *, name: str | None = 
         summary = compaction.summarize(compaction.CompactionPlan(to_summarize=chosen),
                                        get_llm(llm_name, agent=session.agent), scopes=scopes)
     path = packs.carry_pack(name, session, chosen, summary)
-    res = CarryResult(name=name, path=path, count=len(chosen), verbatim=verbatim)
+    res = CarryResult(name=name, path=path, count=len(chosen), verbatim=verbatim,
+                      structured=verbatim or parse_structured_summary(summary) is not None)
     if new_chat:
         target = to_agent or session.agent
         seeded = packs.seed_session(packs.load_pack(name), target, project)

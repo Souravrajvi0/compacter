@@ -615,6 +615,8 @@ def cmd_carry(args: argparse.Namespace) -> int:
         return 1
     how = "verbatim" if res.verbatim else "summarized"
     print(f"carried {res.count} messages ({how}) -> pack {res.name!r}")
+    if not res.structured:
+        print("warning: the summarizer did not return structured JSON; stored as plain text", file=sys.stderr)
     if res.new_session_id:
         print(f"CTXPIPE_NEW_SESSION={res.new_session_id}")
     if res.new_chat:

@@ -37,7 +37,8 @@ the summary before the agent ever sees it.
 ## Getting started
 
 ```bash
-pip install .                     # from this repo; PyPI later
+pip install ctxpipe              # from PyPI
+pip install .                     # or from a clone of this repo
 pip install ".[dev,anthropic]"    # with tests + Anthropic summarizer
 # No API key needed: summaries are written by the agent you already use (claude / codex / opencode).
 # Optional: export ANTHROPIC_API_KEY=... and pass --llm anthropic to use the API instead.

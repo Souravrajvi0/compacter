@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v2.2.0
 
 - Context packs (`ctxpipe pack`, `ctxpipe new`), `ctxpipe carry`, and `--llm auto` (summarize with the agent CLI you already use)
 - Per-version compatibility tests (`tests/test_compat.py`, fixtures in `tests/data/compat/`)
