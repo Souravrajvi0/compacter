@@ -1,0 +1,32 @@
+name: Publish to GitHub Packages
+
+# Publishes the npm launcher to GitHub Packages as @souravrajvi0/compacter
+# when a GitHub release is published (or when run manually).
+# The npmjs.com package ("compacter") is untouched: the scope is applied
+# only inside this job. Uses the built-in GITHUB_TOKEN; no secrets to add.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    defaults:
+      run:
+        working-directory: npm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: https://npm.pkg.github.com
+          scope: "@souravrajvi0"
+      - name: Scope package name for GitHub Packages
+        run: npm pkg set name="@souravrajvi0/compacter"
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
